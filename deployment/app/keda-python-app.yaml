@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqs-app
+  namespace: keda-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqs-reader
+  template:
+    metadata:
+      labels:
+        app: sqs-reader
+    spec:
+      serviceAccountName: keda-service-account
+      containers:
+      - name: sqs-pull-app
+        image: 794038226274.dkr.ecr.us-east-1.amazonaws.com/keda-sqs-reader:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: metrics
+          protocol: TCP
+        env:
+        - name: SQS_QUEUE_URL
+          value: https://sqs.us-east-1.amazonaws.com/794038226274/keda-demo-queue.fifo
+        - name: DYNAMODB_TABLE
+          value: payments
+        - name: AWS_REGION
+          value: us-east-1
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqs-reader-metrics
+  namespace: keda-test
+  labels:
+    app: sqs-app
+spec:
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: metrics
+  selector:
+    app: sqs-reader
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sqs-reader-monitor
+  namespace: keda-test
+  labels:
+    app: sqs-reader
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: sqs-app
+  endpoints:
+  - port: metrics
+    interval: 10s
+    path: /metrics

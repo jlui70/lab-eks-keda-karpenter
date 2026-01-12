@@ -1,0 +1,232 @@
+# ===============================================
+# EKS KEDA Karpenter - Lab Project
+# ===============================================
+
+# ===============================================
+# Documentação Local (não publicar)
+# ===============================================
+docs/
+*.md.backup
+*.md.tmp
+
+# ===============================================
+# Backups e Snapshots (mantém apenas local)
+# ===============================================
+backups/
+backup_*/
+pre-*
+*.backup
+*.bak
+
+# ===============================================
+# Python
+# ===============================================
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ===============================================
+# Kubernetes / AWS Temporários
+# ===============================================
+# Kubectl cache
+.kube/cache/
+
+# Temporary kubeconfig files
+kubeconfig-*
+*.kubeconfig
+
+# AWS CLI cache
+.aws-sam/
+
+# Terraform (se usado)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# ===============================================
+# IDE e Editores
+# ===============================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+*~
+tags
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ===============================================
+# Sistema Operacional
+# ===============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===============================================
+# Logs e Temporários
+# ===============================================
+*.log
+*.tmp
+*.temp
+logs/
+*.log.*
+
+# ===============================================
+# Secrets e Credenciais (NUNCA COMITAR!)
+# ===============================================
+# AWS Credentials
+.aws/credentials
+.aws/config
+
+# Environment variables com secrets
+.env
+.env.local
+.env.*.local
+
+# Kubernetes secrets
+*-secret.yaml
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.ppk
+
+# ===============================================
+# Arquivos de Trabalho Temporário
+# ===============================================
+# Notas pessoais
+INSTRUCOES-*.txt
+TODO.md
+NOTES.md
+scratch/
+tmp/
+
+# Outputs de testes
+test-output/
+results/
+reports/
+
+# ===============================================
+# Compressão e Archives
+# ===============================================
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ===============================================
+# Node.js (se houver frontend)
+# ===============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ===============================================
+# Docker
+# ===============================================
+# Não ignorar Dockerfile, mas ignorar builds locais
+.dockerignore.local
+docker-compose.override.yml
+
+# ===============================================
+# Monitoring / Observability
+# ===============================================
+# Grafana data local
+grafana-data/
+prometheus-data/
+
+# ===============================================
+# Misc
+# ===============================================
+.svn/
+.hg/
+.bzr/
+.git/

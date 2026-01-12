@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keda-trigger-auth-aws-credentials
+  namespace: keda-test
+type: Opaque
+data:
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-aws-credentials
+  namespace: keda-test
+spec:
+  secretTargetRef:
+  - parameter: awsAccessKeyID
+    name: keda-trigger-auth-aws-credentials
+    key: AWS_ACCESS_KEY_ID
+  - parameter: awsSecretAccessKey
+    name: keda-trigger-auth-aws-credentials
+    key: AWS_SECRET_ACCESS_KEY
+  podIdentity:
+    provider: aws-eks
+---
+# NOTA: Este arquivo é apenas para referência.
+# O script createkeda.sh cria o ScaledObject dinamicamente com a URL correta da fila SQS.
+# Se aplicar manualmente, substitua ${SQS_QUEUE_URL} pela URL real:
+# https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/keda-demo-queue.fifo
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sqs-scaledobject
+  namespace: keda-test
+spec:
+  scaleTargetRef:
+    name: sqs-app
+  pollingInterval: 10
+  cooldownPeriod: 30
+  minReplicaCount: 1
+  maxReplicaCount: 50
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: keda-trigger-auth-aws-credentials
+    metadata:
+      queueURL: ${SQS_QUEUE_URL}
+      queueLength: "5"
+      awsRegion: "us-east-1"
+      identityOwner: operator
