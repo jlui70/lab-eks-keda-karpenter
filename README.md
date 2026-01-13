@@ -1,5 +1,14 @@
 # 🚀 EKS Autoscaling com KEDA e Karpenter v2
 
+<p align="center">
+  <img src="https://img.shields.io/badge/AWS-EKS_1.31-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white" />
+  <img src="https://img.shields.io/badge/Karpenter-0.16.3-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
+  <img src="https://img.shields.io/badge/KEDA-2.15.1-2496ED?style=for-the-badge&logo=kubernetes&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kubernetes-1.31-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
+  <img src="https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" />
+  <img src="https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
+</p>
+
 ## ✨ **VERSÃO CORRIGIDA E FUNCIONAL**
 
 > **Esta é a versão 2.0 do lab**, completamente refatorada e testada com as APIs mais recentes do Karpenter e KEDA.
@@ -458,31 +467,77 @@ eks-keda-karpenter-v2/
 
 ---
 
-## 🙏 Créditos
+## 🙏 Créditos e Agradecimentos
 
-**Versão Original:** [aws-samples/amazon-eks-scaling-with-keda-and-karpenter](https://github.com/aws-samples/amazon-eks-scaling-with-keda-and-karpenter)
+### 📚 Versão Original
 
-**Melhorias nesta versão v2:**
-- ✅ Migração completa para Karpenter v1 (NodePool/EC2NodeClass)
-- ✅ Migração para KEDA API v2
-- ✅ Scripts 100% automatizados e validados
-- ✅ Correção de todos os bugs conhecidos
-- ✅ Validação de dependências em cada etapa
+**Projeto Base:** [aws-samples/amazon-eks-scaling-with-keda-and-karpenter](https://github.com/aws-samples/amazon-eks-scaling-with-keda-and-karpenter)
+
+### ✨ Melhorias nesta Versão v2
+
+- ✅ Instalação 100% automatizada (cluster → monitoring)
+- ✅ EBS CSI Driver configurado automaticamente
+- ✅ KEDA API corrigida (v1alpha1)
+- ✅ Namespaces e recursos Karpenter corrigidos
+- ✅ Scripts validados e testados end-to-end
 - ✅ Documentação completa em português
 - ✅ Troubleshooting detalhado
+- ✅ Stack de monitoring com Grafana + Prometheus
+
+### 🌟 Tecnologias Utilizadas
+
+Agradecimentos especiais às comunidades open-source:
+
+- **AWS EKS** - Managed Kubernetes service
+- **Karpenter** - Just-in-time node provisioning
+- **KEDA** - Kubernetes Event-driven Autoscaling
+- **Prometheus** - Cloud-native monitoring
+- **Grafana** - Metrics visualization
+- **Helm** - Kubernetes package manager
+- **Python** - Application development
+- **eksctl** - EKS cluster management
+
+### 💙 Comunidade
+
+Este projeto foi criado para ajudar a comunidade brasileira de DevOps, SRE e Cloud Engineering a implementar autoscaling avançado de forma prática e automatizada.
+
+---
+
+## 📞 Contato e Suporte
+
+### 🌐 Conecte-se Comigo
+
+- 📹 **YouTube:** [DevOps Project](https://www.youtube.com/@devops-project)
+- 💼 **Portfólio:** [devopsproject.com.br](https://devopsproject.com.br/)
+- 💻 **GitHub:** [@jlui70](https://github.com/jlui70)
+
+### 💬 Precisa de Ajuda?
+
+- 🐛 Abra uma [issue no repositório](https://github.com/jlui70/lab-eks-keda-karpenter/issues)
+- 💡 Participe das discussões no YouTube
+- 📧 Entre em contato via portfólio
+
+### 🌟 Gostou do Projeto?
+
+Se este projeto foi útil para você:
+
+- ⭐ Dê uma **estrela** no [repositório](https://github.com/jlui70/lab-eks-keda-karpenter)
+- 🔄 **Compartilhe** com a comunidade
+- 📹 **Inscreva-se** no canal do YouTube
+- 🤝 **Contribua** com melhorias
 
 ---
 
 ## 📄 Licença
 
-MIT License - Veja [LICENSE](../eks-autoscaling-keda-karpenter/LICENSE) para detalhes
+MIT License - Este projeto está licenciado sob a licença MIT.
 
 ---
 
 <p align="center">
-  <strong>Desenvolvido com ❤️ para a comunidade DevOps Brasil</strong>
+  <strong>Desenvolvido com ❤️ para a comunidade brasileira de DevOps, SRE e Cloud Engineering</strong>
 </p>
 
 <p align="center">
-  <sub>Última atualização: Janeiro 2026</sub>
+  <sub>EKS Autoscaling com KEDA e Karpenter • 2025-2026 • Todos os direitos reservados</sub>
 </p>
