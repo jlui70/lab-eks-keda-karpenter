@@ -163,9 +163,12 @@ echo ""
 echo "   ${CYAN}Terminal 3 - Nodes:${NC}"
 echo "   watch kubectl get nodes"
 echo ""
-echo "   ${CYAN}Terminal 4 - Karpenter Logs:${NC}"
-echo "   kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -f"
-echo ""
+echo "   ${CYAN}Terminal 4 - Fila SQS (vai acumular centenas de mensagens) Fila SQS:${NC}"
+echo "   watch -n 5 'aws sqs get-queue-attributes --queue-url https://sqs.us-east-1.amazonaws.com/794038226274/keda-demo-queue.fifo --attribute-names ApproximateNumberOfMessages --query "Attributes.ApproximateNumberOfMessages" --output text'
+#echo ""
+#echo "   ${CYAN}Terminal 4 - Karpenter Logs:${NC}"
+#echo "   kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -f"
+#echo ""
 
 sleep 3
 

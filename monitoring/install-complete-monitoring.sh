@@ -49,11 +49,11 @@ helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
   --set grafana.adminPassword=admin123 \
   --set prometheus.prometheusSpec.retention=15d \
   --set prometheus.prometheusSpec.scrapeInterval=30s \
-  --set grafana.service.type=LoadBalancer \
+  --set grafana.service.type=ClusterIP \
   --set grafana.sidecar.dashboards.enabled=true \
   --set grafana.sidecar.dashboards.label=grafana_dashboard \
   --set grafana.sidecar.dashboards.searchNamespace=monitoring \
-  --wait --timeout=600s >/dev/null 2>&1
+  --wait --timeout=600s
 
 echo "${GREEN}   ✅ Prometheus + Grafana instalados${NC}"
 echo ""
@@ -213,8 +213,8 @@ echo "${CYAN}   URL: http://localhost:9090${NC}"
 echo ""
 
 echo "${GREEN}📋 Dashboards Disponíveis no Grafana:${NC}"
-echo "${CYAN}   1. SQS Payments Dashboard - Fila SQS + KEDA Scaling${NC}"
-echo "${CYAN}   2. EKS E-commerce Dashboard - HTTP + Karpenter Nodes${NC}"
+echo "${CYAN}   1. EKS Payment Processing - KEDA + Karpenter (SQS)${NC}"
+echo "${CYAN}   2. EKS E-Commerce - KEDA Autoscaling Monitor${NC}"
 echo "${CYAN}   3. Kubernetes Dashboards - Pré-instalados (Cluster, Pods, Nodes)${NC}"
 echo ""
 
@@ -222,7 +222,7 @@ echo "${YELLOW}🎯 Para DEMONSTRAÇÃO:${NC}"
 echo "${CYAN}   1. Abra terminal e execute: kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring${NC}"
 echo "${CYAN}   2. Abra navegador: http://localhost:3000${NC}"
 echo "${CYAN}   3. Login: admin / admin123${NC}"
-echo "${CYAN}   4. Menu: Dashboards → Browse → Selecione 'SQS Payments Dashboard'${NC}"
+echo "${CYAN}   4. Menu: Dashboards → Browse → Selecione 'EKS Payment Processing - KEDA + Karpenter (SQS)'${NC}"
 echo "${CYAN}   5. Execute teste: cd tests && ./run-load-test.sh${NC}"
 echo "${CYAN}   6. Observe o dashboard em tempo real!${NC}"
 echo ""

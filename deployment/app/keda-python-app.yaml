@@ -52,20 +52,3 @@ spec:
     name: metrics
   selector:
     app: sqs-reader
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: sqs-reader-monitor
-  namespace: keda-test
-  labels:
-    app: sqs-reader
-    release: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: sqs-app
-  endpoints:
-  - port: metrics
-    interval: 10s
-    path: /metrics

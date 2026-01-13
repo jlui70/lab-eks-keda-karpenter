@@ -83,6 +83,16 @@ echo "${GREEN}   ✅ Credenciais AWS: OK${NC}"
 
 echo ""
 echo "${GREEN}════════════════════════════════════════════════════════════${NC}"
+echo "${YELLOW}⚠️  Este script irá instalar AUTOMATICAMENTE:${NC}"
+echo "   ${CYAN}• Cluster EKS (15-20 min)${NC}"
+echo "   ${CYAN}• Karpenter (3-5 min)${NC}"
+echo "   ${CYAN}• AWS Services - SQS + DynamoDB (1 min)${NC}"
+echo "   ${CYAN}• Application Container (2-3 min)${NC}"
+echo "   ${CYAN}• KEDA (3-5 min)${NC}"
+echo "   ${CYAN}• Monitoring Stack - Prometheus + Grafana (3-5 min)${NC}"
+echo ""
+echo "${YELLOW}📊 Tempo total estimado: ~30-35 minutos${NC}"
+echo ""
 echo "${BLUE}Deseja continuar? ${YELLOW}(Digite Y para prosseguir ou N para cancelar)${NC}"
 echo -n "${CYAN}Resposta: ${NC}"
 read user_input
@@ -96,91 +106,50 @@ if [[ "$user_input" != "Y" && "$user_input" != "y" ]]; then
     exit 0
 fi
 
-# Menu de seleção
+# Iniciar deployment completo automaticamente
 echo ""
-echo "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${BLUE}║          SELEÇÃO DE MÓDULOS DE IMPLANTAÇÃO                ║${NC}"
-echo "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
+echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo "${GREEN}║          LAB EKS + KEDA + KARPENTER + MONITORING           ║${NC}"
+echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo "${CYAN}Escolha uma opção:${NC}"
-echo ""
-echo "   ${GREEN}1)${NC} Implantar apenas o Cluster EKS"
-echo "   ${GREEN}2)${NC} Implantar Cluster EKS + Karpenter"
-echo "   ${GREEN}3)${NC} Implantar COMPLETO: Cluster + Karpenter + KEDA + AWS Services ${YELLOW}(Recomendado)${NC}"
-echo ""
-echo "${GREEN}════════════════════════════════════════════════════════════${NC}"
-echo -n "${CYAN}Digite sua escolha (1, 2 ou 3): ${NC}"
-read deployment_option
+        echo ""
+        echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo "${GREEN}║                DEPLOYMENT AUTOMATIZADO                     ║${NC}"
+        echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        
+echo "${YELLOW}🚀 Etapa 1/6: Implantando Cluster EKS (20-25 min)...${NC}"
+chmod +x ./cluster/createCluster.sh
+./cluster/createCluster.sh
 
-case $deployment_option in
-    1)
-        echo ""
-        echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo "${GREEN}║              OPÇÃO 1: CLUSTER EKS                         ║${NC}"
-        echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
-        echo ""
-        
-        chmod +x ./cluster/createCluster.sh
-        ./cluster/createCluster.sh
-        
-        echo ""
-        echo "${GREEN}✅ Opção 1 concluída!${NC}"
-        ;;
-        
-    2)
-        echo ""
-        echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo "${GREEN}║          OPÇÃO 2: CLUSTER EKS + KARPENTER                 ║${NC}"
-        echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
-        echo ""
-        
-        echo "${YELLOW}🚀 Etapa 1/2: Implantando Cluster EKS...${NC}"
-        chmod +x ./cluster/createCluster.sh
-        ./cluster/createCluster.sh
-        
-        echo ""
-        echo "${YELLOW}🚀 Etapa 2/2: Implantando Karpenter...${NC}"
-        chmod +x ./karpenter/createkarpenter.sh
-        ./karpenter/createkarpenter.sh
-        
-        echo ""
-        echo "${GREEN}✅ Opção 2 concluída!${NC}"
-        ;;
-        
-    3)
-        echo ""
-        echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo "${GREEN}║       OPÇÃO 3: DEPLOYMENT COMPLETO                       ║${NC}"
-        echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
-        echo ""
-        
-        echo "${YELLOW}🚀 Etapa 1/4: Implantando Cluster EKS (20-25 min)...${NC}"
-        chmod +x ./cluster/createCluster.sh
-        ./cluster/createCluster.sh
-        
-        echo ""
-        echo "${YELLOW}🚀 Etapa 2/5: Implantando Karpenter (5-7 min)...${NC}"
-        chmod +x ./karpenter/createkarpenter.sh
-        ./karpenter/createkarpenter.sh
-        
-        echo ""
-        echo "${YELLOW}🚀 Etapa 3/5: Criando recursos AWS (SQS e DynamoDB)...${NC}"
-        chmod +x ./services/awsService.sh 
-        ./services/awsService.sh
-        
-        echo ""
-        echo "${YELLOW}🚀 Etapa 4/5: Build & Push Docker Image para ECR (2-3 min)...${NC}"
-        chmod +x ./app/buildDockerImage.sh
-        ./app/buildDockerImage.sh
-        
-        echo ""
-        echo "${YELLOW}🚀 Etapa 5/5: Implantando KEDA (3-5 min)...${NC}"
-        chmod +x ./keda/createkeda.sh
-        ./keda/createkeda.sh
-        
-        echo ""
-        echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo "${GREEN}║          ✅ DEPLOYMENT COMPLETO CONCLUÍDO!                 ║${NC}"
+echo ""
+echo "${YELLOW}🚀 Etapa 2/6: Implantando Karpenter (5-7 min)...${NC}"
+chmod +x ./karpenter/createkarpenter.sh
+./karpenter/createkarpenter.sh
+
+echo ""
+echo "${YELLOW}🚀 Etapa 3/6: Criando recursos AWS (SQS e DynamoDB)...${NC}"
+chmod +x ./services/awsService.sh 
+./services/awsService.sh
+
+echo ""
+echo "${YELLOW}🚀 Etapa 4/6: Build & Push Docker Image para ECR (2-3 min)...${NC}"
+chmod +x ./app/buildDockerImage.sh
+./app/buildDockerImage.sh
+
+echo ""
+echo "${YELLOW}🚀 Etapa 5/6: Implantando KEDA (3-5 min)...${NC}"
+chmod +x ./keda/createkeda.sh
+./keda/createkeda.sh
+
+echo ""
+echo "${YELLOW}🚀 Etapa 6/6: Instalando Monitoring Stack (3-5 min)...${NC}"
+chmod +x ../monitoring/install-complete-monitoring.sh
+../monitoring/install-complete-monitoring.sh
+
+echo ""
+echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo "${GREEN}║    ✅ DEPLOYMENT COMPLETO + MONITORING CONCLUÍDO!         ║${NC}"
         echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
         echo ""
         
@@ -212,8 +181,8 @@ case $deployment_option in
         kubectl get hpa -n keda-test
         echo ""
         
-        echo "${CYAN}7. NodePool do Karpenter:${NC}"
-        kubectl get nodepool
+        echo "${CYAN}7. Provisioner do Karpenter:${NC}"
+        kubectl get provisioner
         echo ""
         
         echo "${GREEN}════════════════════════════════════════════════════════════${NC}"
@@ -224,14 +193,20 @@ case $deployment_option in
         echo "   ${GREEN}1. Validar ambiente:${NC}"
         echo "      • Verificar logs KEDA: kubectl logs -n keda -l app.kubernetes.io/name=keda-operator --tail=50"
         echo "      • Verificar logs Karpenter: kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter --tail=50"
+        echo "      • Verificar monitoring: kubectl get pods -n monitoring"
         echo ""
-        echo "   ${GREEN}2. Executar teste de carga SQS:${NC}"
+        echo "   ${GREEN}2. Acessar Grafana:${NC}"
+        echo "      kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring"
+        echo "      Acesse: http://localhost:3000 (admin/admin)"
+        echo ""
+        echo "   ${GREEN}3. Executar teste de carga SQS:${NC}"
         echo "      cd tests && ./run-load-test.sh"
         echo ""
-        echo "   ${GREEN}3. Monitorar scaling:${NC}"
-        echo "      • Pods: watch kubectl get pods -n keda-test"
-        echo "      • HPA: watch kubectl get hpa -n keda-test"
-        echo "      • Nodes: watch kubectl get nodes"
+        echo "   ${GREEN}4. Monitorar scaling (4 terminais):${NC}"
+        echo "      • Terminal 1 - HPA: watch -n 2 'kubectl get hpa -n keda-test'"
+        echo "      • Terminal 2 - Pods: watch -n 2 'kubectl get pods -n keda-test'"
+        echo "      • Terminal 3 - Nodes: watch -n 2 'kubectl get nodes'"
+        echo "      • Terminal 4 - Karpenter: kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -f"
         echo ""
         echo "${YELLOW}💰 Lembre-se:${NC} Após os testes, execute ./scripts/cleanup.sh para remover recursos e evitar custos!"
         echo ""

@@ -146,7 +146,7 @@ watch kubectl get nodes
 
 **Terminal 4 - Karpenter:**
 ```bash
-kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -f
+kubectl logs -n kube-system -l app.kubernetes.io/name=karpenter -f
 ```
 
 ### 🎯 O que esperar:
@@ -168,7 +168,7 @@ kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -f
 kubectl get nodes
 
 # 2. Verificar Karpenter (2 pods Running)
-kubectl get pods -n karpenter
+kubectl get pods -n kube-system -l app.kubernetes.io/name=karpenter
 
 # 3. Verificar KEDA (3 pods Running)
 kubectl get pods -n keda
@@ -203,7 +203,7 @@ kubectl describe scaledobject -n keda-test
 **Problema: Karpenter não cria nodes**
 ```bash
 # Verificar logs do Karpenter
-kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter --tail=50
+kubectl logs -n kube-system -l app.kubernetes.io/name=karpenter --tail=50
 
 # Verificar NodePool
 kubectl describe nodepool default

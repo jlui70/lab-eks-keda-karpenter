@@ -180,3 +180,40 @@ aws ec2 create-tags --resources ${CLUSTER_SG} --tags \
 echo ""
 echo "${GREEN}✅ Tags adicionadas com sucesso!${NC}"
 echo ""
+# =============================================================================
+# INSTALAR EBS CSI DRIVER (necessário para PersistentVolumes)
+# =============================================================================
+echo "${YELLOW}📦 Instalando AWS EBS CSI Driver...${NC}"
+echo ""
+
+# Criar IAM service account para EBS CSI Driver
+echo "${CYAN}   • Criando IAM service account para EBS CSI Driver...${NC}"
+eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster ${CLUSTER_NAME} \
+    --region ${AWS_REGION} \
+    --role-name ${CLUSTER_NAME}-ebs-csi-driver-role \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --approve \
+    --override-existing-serviceaccounts
+
+# Instalar EBS CSI Driver addon
+echo "${CYAN}   • Instalando EBS CSI Driver addon...${NC}"
+eksctl create addon \
+    --name aws-ebs-csi-driver \
+    --cluster ${CLUSTER_NAME} \
+    --region ${AWS_REGION} \
+    --service-account-role-arn arn:aws:iam::${ACCOUNT_ID}:role/${CLUSTER_NAME}-ebs-csi-driver-role \
+    --force
+
+# Aguardar addon ficar ativo
+echo "${CYAN}   • Aguardando addon ficar ativo (30s)...${NC}"
+sleep 30
+
+# Verificar instalação
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-ebs-csi-driver
+
+echo ""
+echo "${GREEN}✅ EBS CSI Driver instalado com sucesso!${NC}"
+echo ""

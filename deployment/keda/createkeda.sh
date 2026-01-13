@@ -238,8 +238,8 @@ kubectl rollout status deployment/${APP_DEPLOYMENT_NAME} -n ${APP_NAMESPACE} --t
 
 echo ""
 
-# Passo 7: Deploy ScaledObject (API v2) - DEPOIS do Deployment
-echo "${YELLOW}📝 Passo 7/7: Criando ScaledObject (API v2)...${NC}"
+# Passo 7: Deploy ScaledObject (API v1alpha1) - DEPOIS do Deployment
+echo "${YELLOW}📝 Passo 7/7: Criando ScaledObject (API v1alpha1)...${NC}"
 
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -251,7 +251,7 @@ type: Opaque
 stringData:
   AWS_REGION: "${AWS_REGION}"
 ---
-apiVersion: keda.sh/v2
+apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: keda-trigger-auth-aws
@@ -259,9 +259,9 @@ metadata:
 spec:
   podIdentity:
     provider: aws
-    identityOwner: operator
+    identityOwner: keda
 ---
-apiVersion: keda.sh/v2
+apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: sqs-scaledobject
@@ -281,10 +281,9 @@ spec:
       queueURL: ${SQS_QUEUE_URL}
       queueLength: "5"
       awsRegion: ${AWS_REGION}
-      identityOwner: "operator"
 EOF
 
-echo "${GREEN}✅ ScaledObject criado com API v2${NC}"
+echo "${GREEN}✅ ScaledObject criado com API v1alpha1${NC}"
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo "${GREEN}║            KEDA INSTALADO COM SUCESSO!                    ║${NC}"

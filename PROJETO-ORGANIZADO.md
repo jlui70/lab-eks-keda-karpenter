@@ -168,7 +168,7 @@ git commit -m "Initial commit: EKS KEDA Karpenter Lab v2
 
 ### 5. Adicionar remote do GitHub
 ```bash
-git remote add origin https://github.com/<seu-usuario>/eks-keda-karpenter-v2.git
+git remote add origin https://github.com/jlui70/lab-eks-keda-karpenter.git
 git branch -M main
 ```
 
