@@ -63,31 +63,7 @@ echo ""
 # =============================================================================
 echo "${YELLOW}📊 ETAPA 2/4: Configurando métricas KEDA...${NC}"
 
-# ServiceMonitor KEDA Operator
-kubectl apply -f - >/dev/null 2>&1 <<EOF
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: keda-operator
-  namespace: monitoring
-  labels:
-    app: keda-operator
-    release: monitoring
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: keda-operator
-  namespaceSelector:
-    matchNames:
-    - keda
-  endpoints:
-  - port: metricsservice
-    path: /metrics
-    interval: 30s
-    scrapeTimeout: 10s
-EOF
-
-# ServiceMonitor KEDA Metrics Server
+# ServiceMonitor KEDA Metrics API Server (o importante para HPA)
 kubectl apply -f - >/dev/null 2>&1 <<EOF
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -169,7 +145,7 @@ GRAFANA_READY=$(kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana
 if [ "$PROMETHEUS_READY" = "True" ] && [ "$GRAFANA_READY" = "True" ]; then
     echo "${GREEN}   ✅ Prometheus: Running${NC}"
     echo "${GREEN}   ✅ Grafana: Running${NC}"
-    echo "${GREEN}   ✅ ServiceMonitors: $(kubectl get servicemonitor -n monitoring 2>/dev/null | grep -c keda || echo 0) KEDA monitors${NC}"
+    echo "${GREEN}   ✅ ServiceMonitors: $(kubectl get servicemonitor -n monitoring 2>/dev/null | grep -c keda || echo 0) KEDA monitor (Metrics API Server)${NC}"
     echo "${GREEN}   ✅ Dashboards: 2 customizados importados${NC}"
 else
     echo "${YELLOW}   ⚠️  Aguardando pods ficarem prontos...${NC}"
