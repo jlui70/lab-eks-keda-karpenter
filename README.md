@@ -81,9 +81,11 @@ python3 --version  # Python 3.8+
 ### 1️⃣ Clone o Repositório
 
 ```bash
-cd /home/luiz7/labs
+# Escolha o diretório de sua preferência
+cd ~
+
 git clone https://github.com/jlui70/lab-eks-keda-karpenter.git
-cd lab-eks-keda-karpenter-v2
+cd lab-eks-keda-karpenter
 ```
 
 ### 2️⃣ Configure Variáveis (Opcional)
@@ -193,11 +195,16 @@ chmod +x run-load-test.sh
 ```
 
 **O script vai perguntar quantas mensagens enviar:**
-**Sugestão: 500 mensagens - Em laboratório foi testado com envio de 500 mensagens e em ~3 minutos foram scalonados 50 pods e 10 nodes**
+
 ```
 Opção 1: Digite um número (ex: 500)
 Opção 2: Digite 'continuous' para modo contínuo
 ```
+
+💡 **Sugestão para testes rápidos:** Envie **500 mensagens** para observar o scaling em ação. Nos testes de laboratório, esse volume demonstrou claramente o comportamento do sistema:
+- ⚡ **~3 minutos** para escalar até **50 pods**
+- 🚀 **10 nodes** provisionados automaticamente pelo Karpenter
+- 📊 Ideal para validar KEDA + Karpenter trabalhando juntos
 
 ### 🎯 O que esperar:
 
