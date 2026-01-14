@@ -136,31 +136,77 @@ echo ""
 # Passo 4: Deletar Cluster EKS (inclui todos os recursos do Kubernetes)
 echo "${YELLOW}📝 Passo 4/7: Deletando cluster EKS (isso pode levar 10-15 min)...${NC}"
 
-if aws eks describe-cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} &>/dev/null; then
-    echo "${CYAN}   • Removendo finalizers de NodePools/Provisioners...${NC}"
-    kubectl patch nodepool default -p '{"metadata":{"finalizers":[]}}' --type=merge 2>/dev/null || true
-    kubectl patch provisioner default -p '{"metadata":{"finalizers":[]}}' --type=merge 2>/dev/null || true
-    
-    echo "${CYAN}   • Terminando instâncias EC2 criadas pelo Karpenter...${NC}"
+# CRÍTICO: Terminar instâncias Karpenter ANTES de deletar o cluster
+echo "${CYAN}   • Terminando instâncias EC2 criadas pelo Karpenter...${NC}"
+# Karpenter v1.0+ usa tag: karpenter.sh/nodepool
+KARPENTER_INSTANCES=$(aws ec2 describe-instances \
+  --filters "Name=tag:karpenter.sh/nodepool,Values=*" \
+            "Name=instance-state-name,Values=running,stopped,stopping,pending" \
+  --query 'Reservations[].Instances[].InstanceId' \
+  --output text \
+  --region ${AWS_REGION} 2>/dev/null)
+
+# Fallback para versão antiga (provisioner) se não encontrar nada
+if [ -z "${KARPENTER_INSTANCES}" ]; then
     KARPENTER_INSTANCES=$(aws ec2 describe-instances \
       --filters "Name=tag:karpenter.sh/provisioner-name,Values=*" \
                 "Name=instance-state-name,Values=running,stopped,stopping,pending" \
       --query 'Reservations[].Instances[].InstanceId' \
       --output text \
       --region ${AWS_REGION} 2>/dev/null)
+fi
+
+# Fallback adicional: buscar por nome karpenter-*
+if [ -z "${KARPENTER_INSTANCES}" ]; then
+    KARPENTER_INSTANCES=$(aws ec2 describe-instances \
+      --filters "Name=tag:Name,Values=karpenter-*" \
+                "Name=instance-state-name,Values=running,stopped,stopping,pending" \
+      --query 'Reservations[].Instances[].InstanceId' \
+      --output text \
+      --region ${AWS_REGION} 2>/dev/null)
+fi
+
+if [ -n "${KARPENTER_INSTANCES}" ]; then
+    echo "${YELLOW}      Terminando instâncias: ${KARPENTER_INSTANCES}${NC}"
     
-    if [ -n "${KARPENTER_INSTANCES}" ]; then
-        echo "${YELLOW}      Terminando instâncias: ${KARPENTER_INSTANCES}${NC}"
-        aws ec2 terminate-instances \
-          --instance-ids ${KARPENTER_INSTANCES} \
-          --region ${AWS_REGION} > /dev/null 2>&1
+    # Primeiro, remover instance profiles das instâncias
+    for INSTANCE_ID in ${KARPENTER_INSTANCES}; do
+        PROFILE_ASSOCIATION=$(aws ec2 describe-iam-instance-profile-associations \
+          --filters "Name=instance-id,Values=${INSTANCE_ID}" \
+          --query 'IamInstanceProfileAssociations[0].AssociationId' \
+          --output text --region ${AWS_REGION} 2>/dev/null)
         
-        echo "${CYAN}      Aguardando terminação das instâncias (30s)...${NC}"
-        sleep 30
-        echo "${GREEN}      ✅ Instâncias terminadas${NC}"
-    else
-        echo "${CYAN}      Nenhuma instância do Karpenter encontrada${NC}"
-    fi
+        if [ -n "${PROFILE_ASSOCIATION}" ] && [ "${PROFILE_ASSOCIATION}" != "None" ]; then
+            echo "${CYAN}      Removendo instance profile da instância ${INSTANCE_ID}...${NC}"
+            aws ec2 disassociate-iam-instance-profile \
+              --association-id ${PROFILE_ASSOCIATION} \
+              --region ${AWS_REGION} &>/dev/null || true
+        fi
+    done
+    
+    # Terminar instâncias
+    aws ec2 terminate-instances \
+      --instance-ids ${KARPENTER_INSTANCES} \
+      --region ${AWS_REGION} > /dev/null 2>&1
+    
+    echo "${CYAN}      Aguardando terminação completa das instâncias...${NC}"
+    # Usar aws ec2 wait para garantir que terminaram (timeout 5 min)
+    aws ec2 wait instance-terminated \
+      --instance-ids ${KARPENTER_INSTANCES} \
+      --region ${AWS_REGION} 2>/dev/null && \
+      echo "${GREEN}      ✅ Todas as instâncias terminadas${NC}" || \
+      echo "${YELLOW}      ⚠️  Timeout aguardando terminação (continuando...)${NC}"
+    
+    # Aguardar mais 10s para garantir que ENIs foram liberadas
+    sleep 10
+else
+    echo "${CYAN}      Nenhuma instância do Karpenter encontrada${NC}"
+fi
+
+if aws eks describe-cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} &>/dev/null; then
+    echo "${CYAN}   • Removendo finalizers de NodePools/Provisioners...${NC}"
+    kubectl patch nodepool default -p '{"metadata":{"finalizers":[]}}' --type=merge 2>/dev/null || true
+    kubectl patch provisioner default -p '{"metadata":{"finalizers":[]}}' --type=merge 2>/dev/null || true
     
     echo "${CYAN}   • Limpando Security Groups órfãos antes de deletar cluster...${NC}"
     VPC_ID=$(aws eks describe-cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} \
@@ -229,6 +275,23 @@ KARPENTER_STACK="Karpenter-${CLUSTER_NAME}"
 # Primeiro, remover instance profiles que possam bloquear a deleção
 echo "${CYAN}   • Removendo instance profiles...${NC}"
 INSTANCE_PROFILE_NAME="KarpenterNodeInstanceProfile-${CLUSTER_NAME}"
+
+# Verificar se há associações ativas antes de deletar
+ACTIVE_ASSOCIATIONS=$(aws ec2 describe-iam-instance-profile-associations \
+  --filters "Name=iam-instance-profile.arn,Values=arn:aws:iam::${ACCOUNT_ID}:instance-profile/${INSTANCE_PROFILE_NAME}" \
+  --query 'IamInstanceProfileAssociations[*].AssociationId' \
+  --output text --region ${AWS_REGION} 2>/dev/null)
+
+if [ -n "${ACTIVE_ASSOCIATIONS}" ]; then
+    echo "${YELLOW}   ⚠️  Encontradas associações ativas, removendo...${NC}"
+    for ASSOC_ID in ${ACTIVE_ASSOCIATIONS}; do
+        aws ec2 disassociate-iam-instance-profile \
+          --association-id ${ASSOC_ID} \
+          --region ${AWS_REGION} &>/dev/null || true
+    done
+    sleep 5
+fi
+
 if aws iam get-instance-profile --instance-profile-name ${INSTANCE_PROFILE_NAME} &>/dev/null; then
     # Remover role do instance profile
     ROLE_IN_PROFILE=$(aws iam get-instance-profile --instance-profile-name ${INSTANCE_PROFILE_NAME} --query 'InstanceProfile.Roles[0].RoleName' --output text 2>/dev/null)
@@ -236,8 +299,9 @@ if aws iam get-instance-profile --instance-profile-name ${INSTANCE_PROFILE_NAME}
         aws iam remove-role-from-instance-profile --instance-profile-name ${INSTANCE_PROFILE_NAME} --role-name ${ROLE_IN_PROFILE} 2>/dev/null
     fi
     # Deletar instance profile
-    aws iam delete-instance-profile --instance-profile-name ${INSTANCE_PROFILE_NAME} 2>/dev/null
-    echo "${GREEN}   ✅ Instance profile removido: ${INSTANCE_PROFILE_NAME}${NC}"
+    aws iam delete-instance-profile --instance-profile-name ${INSTANCE_PROFILE_NAME} 2>/dev/null && \
+      echo "${GREEN}   ✅ Instance profile removido: ${INSTANCE_PROFILE_NAME}${NC}" || \
+      echo "${YELLOW}   ⚠️  Erro ao remover instance profile (será removido pelo CloudFormation)${NC}"
 fi
 
 # Detach de IAM policies antes de deletar stack
@@ -263,39 +327,69 @@ if aws iam get-policy --policy-arn ${KARPENTER_POLICY_ARN} &>/dev/null; then
 fi
 
 # Agora deletar o stack
+KARPENTER_STACK_DELETED=false
 if aws cloudformation describe-stacks --stack-name ${KARPENTER_STACK} --region ${AWS_REGION} &>/dev/null; then
     echo "${CYAN}   • Deletando stack CloudFormation...${NC}"
     aws cloudformation delete-stack --stack-name ${KARPENTER_STACK} --region ${AWS_REGION}
     
-    echo "${CYAN}   ⏳ Aguardando exclusão da stack (timeout 5 minutos)...${NC}"
+    echo "${CYAN}   ⏳ Aguardando exclusão da stack (timeout 8 minutos)...${NC}"
     
-    # Aguardar com timeout de 5 minutos
-    TIMEOUT=300
+    # Aguardar com timeout de 8 minutos (aumentado)
+    TIMEOUT=480
     ELAPSED=0
+    RETRY_COUNT=0
+    MAX_RETRIES=3
+    
     while [ $ELAPSED -lt $TIMEOUT ]; do
         STATUS=$(aws cloudformation describe-stacks --stack-name ${KARPENTER_STACK} --region ${AWS_REGION} --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "DELETED")
         
         if [ "$STATUS" == "DELETED" ] || [ "$STATUS" == "DELETE_COMPLETE" ]; then
             echo "${GREEN}   ✅ CloudFormation Stack deletada: ${KARPENTER_STACK}${NC}"
+            KARPENTER_STACK_DELETED=true
             increment_deleted
             break
         elif [ "$STATUS" == "DELETE_FAILED" ]; then
-            echo "${RED}   ❌ Falha ao deletar stack. Tentando forçar deleção...${NC}"
-            # Tentar deletar novamente
-            aws cloudformation delete-stack --stack-name ${KARPENTER_STACK} --region ${AWS_REGION} 2>/dev/null
-            sleep 10
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -le $MAX_RETRIES ]; then
+                echo "${YELLOW}   ⚠️  Falha ao deletar stack (tentativa ${RETRY_COUNT}/${MAX_RETRIES})${NC}"
+                
+                # Verificar motivo da falha
+                FAILED_RESOURCES=$(aws cloudformation describe-stack-events --stack-name ${KARPENTER_STACK} --region ${AWS_REGION} --max-items 10 --query 'StackEvents[?ResourceStatus==`DELETE_FAILED`].LogicalResourceId' --output text 2>/dev/null)
+                
+                if [ ! -z "$FAILED_RESOURCES" ]; then
+                    echo "${CYAN}      Recursos com falha: ${FAILED_RESOURCES}${NC}"
+                    
+                    # Se role falhou, tentar deletar manualmente
+                    if echo "$FAILED_RESOURCES" | grep -q "KarpenterNodeRole"; then
+                        echo "${CYAN}      Tentando deletar KarpenterNodeRole manualmente...${NC}"
+                        # Será tratado na seção de limpeza de roles (Passo 7)
+                    fi
+                fi
+                
+                # Retry com força
+                echo "${CYAN}      Tentando forçar deleção novamente...${NC}"
+                aws cloudformation delete-stack --stack-name ${KARPENTER_STACK} --region ${AWS_REGION} 2>/dev/null
+                sleep 20
+            else
+                echo "${RED}   ❌ Stack falhou após ${MAX_RETRIES} tentativas${NC}"
+                echo "${YELLOW}   ⚠️  Prosseguindo com limpeza manual de recursos...${NC}"
+                break
+            fi
         fi
         
-        sleep 10
-        ELAPSED=$((ELAPSED + 10))
+        sleep 15
+        ELAPSED=$((ELAPSED + 15))
     done
     
     # Verificar se ainda existe após timeout
-    if aws cloudformation describe-stacks --stack-name ${KARPENTER_STACK} --region ${AWS_REGION} &>/dev/null; then
-        echo "${YELLOW}   ⚠️  Stack ainda existe. Deletar manualmente ou aguardar mais tempo.${NC}"
+    FINAL_STATUS=$(aws cloudformation describe-stacks --stack-name ${KARPENTER_STACK} --region ${AWS_REGION} --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "DELETED")
+    if [ "$FINAL_STATUS" != "DELETED" ] && [ "$FINAL_STATUS" != "DELETE_COMPLETE" ]; then
+        echo "${YELLOW}   ⚠️  Stack ainda existe em estado: ${FINAL_STATUS}${NC}"
+        echo "${CYAN}   💡 Recursos órfãos serão limpos na verificação final${NC}"
     fi
 else
     echo "${BLUE}   ℹ️  CloudFormation Stack não encontrada ou já deletada${NC}"
+    KARPENTER_STACK_DELETED=true
 fi
 
 # Verificar se há outras stacks órfãs
@@ -310,8 +404,15 @@ if [ ! -z "$ORPHAN_STACKS" ]; then
 fi
 echo ""
 
-# Passo 6: Deletar IAM Policies
+# Passo 6: Deletar IAM Policies (somente órfãs ou se stack falhou)
 echo "${YELLOW}📝 Passo 6/7: Deletando IAM Policies...${NC}"
+
+# Se stack Karpenter foi deletada com sucesso, policies devem ter sido deletadas também
+if [ "$KARPENTER_STACK_DELETED" = true ]; then
+    echo "${CYAN}   • Stack Karpenter deletada com sucesso, verificando policies órfãs...${NC}"
+else
+    echo "${CYAN}   • Stack Karpenter falhou, limpando policies manualmente...${NC}"
+fi
 
 # Lista de policies para deletar
 POLICIES=(
@@ -340,10 +441,22 @@ for POLICY_NAME in "${POLICIES[@]}"; do
 done
 echo ""
 
-# Passo 7: Deletar IAM Roles
+# Passo 7: Deletar IAM Roles (somente órfãs ou se stack falhou)
 echo "${YELLOW}📝 Passo 7/7: Deletando IAM Roles...${NC}"
 
+# Se stack Karpenter foi deletada com sucesso, roles devem ter sido deletadas também
+if [ "$KARPENTER_STACK_DELETED" = true ]; then
+    echo "${CYAN}   • Stack Karpenter deletada com sucesso, verificando roles órfãs...${NC}"
+else
+    echo "${CYAN}   • Stack Karpenter falhou, limpando roles manualmente...${NC}"
+fi
+
 # Lista de roles para deletar
+ROLES=(
+    "KarpenterNodeRole-${CLUSTER_NAME}"
+    "KarpenterControllerRole-${CLUSTER_NAME}"
+    "KedaDemoRole-${CLUSTER_NAME}"
+)
 ROLES=(
     "KarpenterNodeRole-${CLUSTER_NAME}"
     "KarpenterControllerRole-${CLUSTER_NAME}"
@@ -352,23 +465,30 @@ ROLES=(
 
 for ROLE_NAME in "${ROLES[@]}"; do
     if aws iam get-role --role-name ${ROLE_NAME} --region ${AWS_REGION} &>/dev/null; then
+        echo "${CYAN}   • Limpando role: ${ROLE_NAME}${NC}"
+        
         # Detach todas as policies
         ATTACHED=$(aws iam list-attached-role-policies --role-name ${ROLE_NAME} --query 'AttachedPolicies[*].PolicyArn' --output text --region ${AWS_REGION})
         for POLICY in $ATTACHED; do
+            echo "${CYAN}      Desanexando policy: ${POLICY}${NC}"
             aws iam detach-role-policy --role-name ${ROLE_NAME} --policy-arn ${POLICY} --region ${AWS_REGION} 2>/dev/null || true
         done
         
         # Deletar instance profiles associados
         INSTANCE_PROFILES=$(aws iam list-instance-profiles-for-role --role-name ${ROLE_NAME} --query 'InstanceProfiles[*].InstanceProfileName' --output text --region ${AWS_REGION})
         for PROFILE in $INSTANCE_PROFILES; do
+            echo "${CYAN}      Removendo instance profile: ${PROFILE}${NC}"
             aws iam remove-role-from-instance-profile --instance-profile-name ${PROFILE} --role-name ${ROLE_NAME} --region ${AWS_REGION} 2>/dev/null || true
             aws iam delete-instance-profile --instance-profile-name ${PROFILE} --region ${AWS_REGION} 2>/dev/null || true
         done
         
         # Deletar role
-        aws iam delete-role --role-name ${ROLE_NAME} --region ${AWS_REGION} 2>/dev/null || true
-        echo "${GREEN}   ✅ Role deletada: ${ROLE_NAME}${NC}"
-        increment_deleted
+        if aws iam delete-role --role-name ${ROLE_NAME} --region ${AWS_REGION} 2>/dev/null; then
+            echo "${GREEN}   ✅ Role deletada: ${ROLE_NAME}${NC}"
+            increment_deleted
+        else
+            echo "${YELLOW}   ⚠️  Não foi possível deletar role: ${ROLE_NAME}${NC}"
+        fi
     else
         echo "${BLUE}   ℹ️  Role não encontrada: ${ROLE_NAME}${NC}"
     fi
@@ -395,12 +515,33 @@ ORPHAN_FOUND=false
 
 # Verificar instâncias EC2 do Karpenter
 echo "${CYAN}Verificando instâncias EC2 do Karpenter...${NC}"
+# Karpenter v1.0+ usa tag: karpenter.sh/nodepool
 ORPHAN_INSTANCES=$(aws ec2 describe-instances \
-  --filters "Name=tag:karpenter.sh/provisioner-name,Values=*" \
+  --filters "Name=tag:karpenter.sh/nodepool,Values=*" \
             "Name=instance-state-name,Values=running,stopped,stopping,pending" \
   --query 'Reservations[].Instances[].InstanceId' \
   --output text \
   --region ${AWS_REGION} 2>/dev/null)
+
+# Fallback para versão antiga
+if [ -z "${ORPHAN_INSTANCES}" ]; then
+    ORPHAN_INSTANCES=$(aws ec2 describe-instances \
+      --filters "Name=tag:karpenter.sh/provisioner-name,Values=*" \
+                "Name=instance-state-name,Values=running,stopped,stopping,pending" \
+      --query 'Reservations[].Instances[].InstanceId' \
+      --output text \
+      --region ${AWS_REGION} 2>/dev/null)
+fi
+
+# Fallback adicional: buscar por nome karpenter-*
+if [ -z "${ORPHAN_INSTANCES}" ]; then
+    ORPHAN_INSTANCES=$(aws ec2 describe-instances \
+      --filters "Name=tag:Name,Values=karpenter-*" \
+                "Name=instance-state-name,Values=running,stopped,stopping,pending" \
+      --query 'Reservations[].Instances[].InstanceId' \
+      --output text \
+      --region ${AWS_REGION} 2>/dev/null)
+fi
 
 if [ -n "${ORPHAN_INSTANCES}" ]; then
     echo "${YELLOW}   ⚠️  Instâncias órfãs encontradas: ${ORPHAN_INSTANCES}${NC}"
@@ -423,11 +564,73 @@ if [ "${STACK_STATUS}" == "DELETE_IN_PROGRESS" ]; then
     echo "${CYAN}   Isso é normal, pode levar até 15 minutos para concluir${NC}"
     echo "${CYAN}   Monitore em: https://console.aws.amazon.com/cloudformation${NC}"
     ORPHAN_FOUND=true
+elif [ "${STACK_STATUS}" == "DELETE_FAILED" ]; then
+    echo "${RED}   ❌ Stack em DELETE_FAILED: ${EKSCTL_STACK}${NC}"
+    
+    # Verificar recursos que falharam
+    FAILED_RESOURCES=$(aws cloudformation describe-stack-events --stack-name ${EKSCTL_STACK} --region ${AWS_REGION} --max-items 20 --query 'StackEvents[?ResourceStatus==`DELETE_FAILED`].[LogicalResourceId,ResourceStatusReason]' --output text 2>/dev/null | head -5)
+    
+    if echo "$FAILED_RESOURCES" | grep -q "VPC"; then
+        echo "${YELLOW}   ⚠️  VPC falhou ao deletar, verificando dependências...${NC}"
+        
+        # Obter VPC ID da stack
+        VPC_ID_FROM_STACK=$(aws cloudformation describe-stack-resources --stack-name ${EKSCTL_STACK} --region ${AWS_REGION} --query 'StackResources[?ResourceType==`AWS::EC2::VPC`].PhysicalResourceId' --output text 2>/dev/null)
+        
+        if [ -n "${VPC_ID_FROM_STACK}" ]; then
+            echo "${CYAN}   • Limpando security groups órfãos da VPC...${NC}"
+            
+            # Buscar security groups órfãos (exceto default)
+            ORPHAN_SGS=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${VPC_ID_FROM_STACK}" --region ${AWS_REGION} --query 'SecurityGroups[?GroupName!=`default`].GroupId' --output text 2>/dev/null)
+            
+            if [ -n "${ORPHAN_SGS}" ]; then
+                for SG_ID in ${ORPHAN_SGS}; do
+                    echo "${CYAN}      Deletando SG: ${SG_ID}${NC}"
+                    aws ec2 delete-security-group --group-id ${SG_ID} --region ${AWS_REGION} 2>/dev/null && \
+                      echo "${GREEN}      ✅ SG deletado${NC}" || \
+                      echo "${YELLOW}      ⚠️  SG não pôde ser deletado (em uso?)${NC}"
+                done
+                
+                # Tentar forçar deleção da stack novamente
+                echo "${CYAN}   • Tentando deletar stack novamente...${NC}"
+                aws cloudformation delete-stack --stack-name ${EKSCTL_STACK} --region ${AWS_REGION} 2>/dev/null
+                echo "${YELLOW}   ⏳ Stack em nova tentativa de deleção${NC}"
+            fi
+        fi
+    fi
+    
+    ORPHAN_FOUND=true
 elif [ "${STACK_STATUS}" != "NOT_FOUND" ] && [ "${STACK_STATUS}" != "DELETE_COMPLETE" ]; then
     echo "${YELLOW}   ⚠️  Stack em estado inesperado: ${STACK_STATUS}${NC}"
     ORPHAN_FOUND=true
 else
     echo "${GREEN}   ✅ Nenhuma stack órfã encontrada${NC}"
+fi
+
+# Verificar ENIs (Elastic Network Interfaces) órfãs
+echo ""
+echo "${CYAN}Verificando ENIs (Elastic Network Interfaces) órfãs...${NC}"
+if [ -n "${VPC_ID}" ] && [ "${VPC_ID}" != "None" ]; then
+    ORPHAN_ENIS=$(aws ec2 describe-network-interfaces \
+      --filters "Name=vpc-id,Values=${VPC_ID}" \
+                "Name=status,Values=available" \
+      --query 'NetworkInterfaces[?Attachment==null].NetworkInterfaceId' \
+      --output text \
+      --region ${AWS_REGION} 2>/dev/null)
+    
+    if [ -n "${ORPHAN_ENIS}" ]; then
+        echo "${YELLOW}   ⚠️  ENIs órfãs encontradas: ${ORPHAN_ENIS}${NC}"
+        echo "${CYAN}   Deletando ENIs...${NC}"
+        for ENI_ID in ${ORPHAN_ENIS}; do
+            aws ec2 delete-network-interface --network-interface-id ${ENI_ID} --region ${AWS_REGION} 2>/dev/null && \
+              echo "${GREEN}   ✅ ENI deletada: ${ENI_ID}${NC}" || \
+              echo "${YELLOW}   ⚠️  Erro ao deletar ENI: ${ENI_ID}${NC}"
+        done
+        ORPHAN_FOUND=true
+    else
+        echo "${GREEN}   ✅ Nenhuma ENI órfã encontrada${NC}"
+    fi
+else
+    echo "${BLUE}   ℹ️  VPC ID não disponível, pulando verificação de ENIs${NC}"
 fi
 
 echo ""
@@ -463,6 +666,21 @@ echo "   1. Console AWS EC2: Verificar se todos os nodes foram removidos"
 echo "   2. Console AWS VPC: Verificar se VPC foi removida"
 echo "   3. Console AWS IAM: Verificar roles órfãs"
 echo "   4. Console AWS CloudFormation: Verificar stacks órfãs"
+echo ""
+
+echo "${YELLOW}💡 Comandos úteis para verificação manual:${NC}"
+echo ""
+echo "   # Verificar instâncias Karpenter:"
+echo "   ${CYAN}aws ec2 describe-instances --filters \"Name=tag:Name,Values=karpenter-*\" --region ${AWS_REGION}${NC}"
+echo ""
+echo "   # Verificar stacks CloudFormation:"
+echo "   ${CYAN}aws cloudformation list-stacks --stack-status-filter DELETE_IN_PROGRESS DELETE_FAILED --region ${AWS_REGION}${NC}"
+echo ""
+echo "   # Verificar ENIs órfãs:"
+echo "   ${CYAN}aws ec2 describe-network-interfaces --filters \"Name=status,Values=available\" --region ${AWS_REGION}${NC}"
+echo ""
+echo "   # Forçar limpeza de recursos órfãos:"
+echo "   ${CYAN}./scripts/force-cleanup.sh${NC}"
 echo ""
 
 echo "${GREEN}════════════════════════════════════════════════════════════${NC}"

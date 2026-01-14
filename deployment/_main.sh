@@ -181,8 +181,12 @@ echo "${GREEN}║    ✅ DEPLOYMENT COMPLETO + MONITORING CONCLUÍDO!         �
         kubectl get hpa -n keda-test
         echo ""
         
-        echo "${CYAN}7. Provisioner do Karpenter:${NC}"
-        kubectl get provisioner
+        echo "${CYAN}7. NodePool do Karpenter (API v1):${NC}"
+        kubectl get nodepool
+        echo ""
+        
+        echo "${CYAN}8. EC2NodeClass do Karpenter (API v1):${NC}"
+        kubectl get ec2nodeclass
         echo ""
         
         echo "${GREEN}════════════════════════════════════════════════════════════${NC}"
@@ -206,18 +210,11 @@ echo "${GREEN}║    ✅ DEPLOYMENT COMPLETO + MONITORING CONCLUÍDO!         �
         echo "      • Terminal 1 - HPA: watch -n 2 'kubectl get hpa -n keda-test'"
         echo "      • Terminal 2 - Pods: watch -n 2 'kubectl get pods -n keda-test'"
         echo "      • Terminal 3 - Nodes: watch -n 2 'kubectl get nodes'"
-        echo "      • Terminal 4 - Karpenter: kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -f"
+        echo "      • Terminal 4 - Fila SQS: watch -n 5 'aws sqs get-queue-attributes --queue-url https://sqs.us-east-1.amazonaws.com/794038226274/keda-demo-queue.fifo --attribute-names ApproximateNumberOfMessages --query "Attributes.ApproximateNumberOfMessages" --output text'
+
         echo ""
         echo "${YELLOW}💰 Lembre-se:${NC} Após os testes, execute ./scripts/cleanup.sh para remover recursos e evitar custos!"
         echo ""
-        ;;
-        
-    *)
-        echo ""
-        echo "${RED}❌ Opção inválida! Escolha 1, 2 ou 3.${NC}"
-        exit 1
-        ;;
-esac
 
 echo ""
 echo "${GREEN}════════════════════════════════════════════════════════════${NC}"

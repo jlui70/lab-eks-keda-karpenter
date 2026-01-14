@@ -1,0 +1,46 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sqs-scaledobject-demo
+  namespace: keda-test
+spec:
+  scaleTargetRef:
+    name: sqs-app
+  # ⚡ CONFIGURAÇÃO DEMO - SCALE DOWN RÁPIDO
+  pollingInterval: 5          # Verifica fila a cada 5s (padrão: 30s)
+  cooldownPeriod: 10          # Aguarda apenas 10s após última métrica (padrão: 300s)
+  minReplicaCount: 1
+  maxReplicaCount: 50
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: keda-trigger-auth-aws
+    metadata:
+      queueURL: ${SQS_QUEUE_URL}
+      queueLength: "5"
+      awsRegion: "us-east-1"
+      scaleOnInFlight: "false"  # Só conta mensagens visíveis (não "in-flight")
+      scaleIfNull: "false"       # Não escala se métrica não disponível
+
+---
+# VERSÃO PRODUÇÃO (Conservative)
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sqs-scaledobject-production
+  namespace: keda-test
+spec:
+  scaleTargetRef:
+    name: sqs-app
+  pollingInterval: 10
+  cooldownPeriod: 300         # 5 minutos - seguro para produção
+  minReplicaCount: 1
+  maxReplicaCount: 50
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: keda-trigger-auth-aws
+    metadata:
+      queueURL: ${SQS_QUEUE_URL}
+      queueLength: "5"
+      awsRegion: "us-east-1"

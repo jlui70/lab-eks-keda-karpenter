@@ -77,6 +77,15 @@ Resources:
             Action:
               - eks:DescribeCluster
             Resource: !Sub "arn:${AWS::Partition}:eks:${AWS::Region}:${AWS::AccountId}:cluster/${ClusterName}"
+          - Effect: Allow
+            Action:
+              - iam:GetInstanceProfile
+              - iam:CreateInstanceProfile
+              - iam:DeleteInstanceProfile
+              - iam:AddRoleToInstanceProfile
+              - iam:RemoveRoleFromInstanceProfile
+              - iam:TagInstanceProfile
+            Resource: "*"
   KarpenterInterruptionQueue:
     Type: AWS::SQS::Queue
     Properties:

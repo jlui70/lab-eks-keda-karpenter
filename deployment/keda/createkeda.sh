@@ -238,8 +238,8 @@ kubectl rollout status deployment/${APP_DEPLOYMENT_NAME} -n ${APP_NAMESPACE} --t
 
 echo ""
 
-# Passo 7: Deploy ScaledObject (API v1alpha1) - DEPOIS do Deployment
-echo "${YELLOW}📝 Passo 7/7: Criando ScaledObject (API v1alpha1)...${NC}"
+# Passo 7: Deploy ScaledObject (API v1alpha1 - única suportada em KEDA 2.15.1) - DEPOIS do Deployment
+echo "${YELLOW}📝 Passo 7/7: Criando ScaledObject (API v1alpha1 - KEDA 2.15.1)...${NC}"
 
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -283,7 +283,7 @@ spec:
       awsRegion: ${AWS_REGION}
 EOF
 
-echo "${GREEN}✅ ScaledObject criado com API v1alpha1${NC}"
+echo "${GREEN}✅ ScaledObject criado com API v1alpha1 (KEDA 2.15.1)${NC}"
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo "${GREEN}║            KEDA INSTALADO COM SUCESSO!                    ║${NC}"

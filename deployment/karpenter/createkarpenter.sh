@@ -198,26 +198,19 @@ export CLUSTER_ENDPOINT="$(aws eks describe-cluster --name ${CLUSTER_NAME} --reg
 # Logout docker registry
 docker logout public.ecr.aws 2>/dev/null || true
 
-# Add Helm repo (force update se já existir)
-if helm repo list 2>/dev/null | grep -q "^karpenter"; then
-    echo "${BLUE}ℹ️  Repositório Karpenter já existe, atualizando...${NC}"
-    helm repo add karpenter https://charts.karpenter.sh/ --force-update
-else
-    echo "${CYAN}📦 Adicionando repositório Karpenter...${NC}"
-    helm repo add karpenter https://charts.karpenter.sh/
-fi
-helm repo update
+# Para Karpenter v1.0+, usar repositório OCI (não mais charts.karpenter.sh)
+echo "${CYAN}📦 Karpenter ${KARPENTER_VERSION} usa repositório OCI (public.ecr.aws)${NC}"
 
 echo "${CYAN}🚀 Instalando Karpenter ${KARPENTER_VERSION}...${NC}"
 
-# Instalar/Atualizar Karpenter
-helm upgrade --install karpenter karpenter/karpenter \
+# Instalar/Atualizar Karpenter via OCI
+helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
   --namespace ${KARPENTER_NAMESPACE} \
   --create-namespace \
   --version "${KARPENTER_VERSION}" \
-  --set clusterName="${CLUSTER_NAME}" \
-  --set clusterEndpoint="${CLUSTER_ENDPOINT}" \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="${KARPENTER_IAM_ROLE_ARN}" \
+  --set "settings.clusterName=${CLUSTER_NAME}" \
+  --set "settings.clusterEndpoint=${CLUSTER_ENDPOINT}" \
+  --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=${KARPENTER_IAM_ROLE_ARN}" \
   --set controller.resources.requests.cpu=1 \
   --set controller.resources.requests.memory=1Gi \
   --set controller.resources.limits.cpu=1 \
@@ -261,64 +254,79 @@ CLUSTER_SG=$(aws eks describe-cluster --name ${CLUSTER_NAME} --region ${AWS_REGI
 echo "${CYAN}✅ Security Group: ${CLUSTER_SG}${NC}"
 echo ""
 
-# Criar AWSNodeTemplate
+# Criar EC2NodeClass (substitui AWSNodeTemplate na API v1)
 cat <<EOF | kubectl apply -f -
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
-  securityGroupSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
-  instanceProfile: "KarpenterNodeInstanceProfile-${CLUSTER_NAME}"
+  amiSelectorTerms:
+    - alias: al2023@latest  # Amazon Linux 2023 - AMI automática
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
+  role: "KarpenterNodeRole-${CLUSTER_NAME}"
   tags:
     karpenter.sh/discovery: "${CLUSTER_NAME}"
     Name: "karpenter-node"
-    Environment: "demo"
+    Environment: "production"
+    ManagedBy: "Karpenter"
+  userData: |
+    #!/bin/bash
+    echo "EKS_CLUSTER_NAME=${CLUSTER_NAME}" >> /etc/environment
 EOF
 
-echo "${GREEN}✅ AWSNodeTemplate criado${NC}"
+echo "${GREEN}✅ EC2NodeClass criado (API v1)${NC}"
 echo ""
 
-# Criar Provisioner
+# Criar NodePool (substitui Provisioner na API v1)
 cat <<EOF | kubectl apply -f -
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1
+kind: NodePool
 metadata:
   name: default
 spec:
-  requirements:
-    - key: "karpenter.sh/capacity-type"
-      operator: In
-      values: ["on-demand"]
-    - key: "node.kubernetes.io/instance-type"
-      operator: In
-      values: ["m5.large", "m5.xlarge", "m5.2xlarge", "m5a.large", "m5a.xlarge"]
-    - key: "kubernetes.io/arch"
-      operator: In
-      values: ["amd64"]
+  template:
+    spec:
+      requirements:
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values: ["on-demand"]
+        - key: "node.kubernetes.io/instance-type"
+          operator: In
+          values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+        - key: "kubernetes.io/arch"
+          operator: In
+          values: ["amd64"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
   limits:
-    resources:
-      cpu: "100"
-      memory: "200Gi"
-  providerRef:
-    name: default
-  ttlSecondsAfterEmpty: 30
+    cpu: "100"
+    memory: "200Gi"
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 30s
+    budgets:
+      - nodes: "10%"
 EOF
 
-echo "${GREEN}✅ Provisioner criado${NC}"
+echo "${GREEN}✅ NodePool criado (API v1)${NC}"
 echo ""
 
 # Verificar recursos
-echo "${YELLOW}🔍 Verificando recursos do Karpenter...${NC}"
+echo "${YELLOW}🔍 Verificando recursos do Karpenter v1.0.1...${NC}"
 echo ""
-echo "${CYAN}AWSNodeTemplate:${NC}"
-kubectl get awsnodetemplate
+echo "${CYAN}EC2NodeClass:${NC}"
+kubectl get ec2nodeclass
 echo ""
-echo "${CYAN}Provisioner:${NC}"
-kubectl get provisioner
+echo "${CYAN}NodePool:${NC}"
+kubectl get nodepool
 echo ""
 
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"

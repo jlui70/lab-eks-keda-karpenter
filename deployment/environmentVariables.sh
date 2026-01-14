@@ -22,8 +22,8 @@ fi
 export CLUSTER_NAME="${CLUSTER_NAME:-eks-demo-scale-v2}"
 export K8S_VERSION="${K8S_VERSION:-1.31}"
 
-# Karpenter Configuration - VERSÃO ATUALIZADA!
-export KARPENTER_VERSION="${KARPENTER_VERSION:-0.16.3}"  # Compatível com EKS 1.31
+# Karpenter Configuration - v1.0.1 LTS (APIs estáveis v1)
+export KARPENTER_VERSION="${KARPENTER_VERSION:-1.0.1}"  # Primeira versão GA estável (sem 'v' prefix para Helm OCI)
 export KARPENTER_NAMESPACE="karpenter"
 
 # KEDA Configuration
