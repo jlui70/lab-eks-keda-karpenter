@@ -601,9 +601,36 @@ elif [ "${STACK_STATUS}" == "DELETE_FAILED" ]; then
     ORPHAN_FOUND=true
 elif [ "${STACK_STATUS}" != "NOT_FOUND" ] && [ "${STACK_STATUS}" != "DELETE_COMPLETE" ]; then
     echo "${YELLOW}   ⚠️  Stack em estado inesperado: ${STACK_STATUS}${NC}"
+    echo "${CYAN}   Forçando deleção da stack...${NC}"
+    aws cloudformation delete-stack --stack-name ${EKSCTL_STACK} --region ${AWS_REGION} 2>/dev/null || true
     ORPHAN_FOUND=true
 else
     echo "${GREEN}   ✅ Nenhuma stack órfã encontrada${NC}"
+fi
+
+# Forçar deleção de TODAS as stacks relacionadas ao cluster
+echo ""
+echo "${CYAN}Verificando TODAS as stacks relacionadas ao cluster...${NC}"
+ALL_RELATED_STACKS=$(aws cloudformation list-stacks --region ${AWS_REGION} \
+  --query "StackSummaries[?contains(StackName, '${CLUSTER_NAME}') && (StackStatus=='DELETE_FAILED' || StackStatus=='CREATE_FAILED' || StackStatus=='CREATE_COMPLETE' || StackStatus=='UPDATE_COMPLETE' || StackStatus=='DELETE_IN_PROGRESS')].StackName" \
+  --output text 2>/dev/null)
+
+if [ -n "${ALL_RELATED_STACKS}" ]; then
+    echo "${YELLOW}   ⚠️  Encontradas ${YELLOW}$(echo ${ALL_RELATED_STACKS} | wc -w)${YELLOW} stacks relacionadas${NC}"
+    for RELATED_STACK in ${ALL_RELATED_STACKS}; do
+        RELATED_STATUS=$(aws cloudformation describe-stacks --stack-name ${RELATED_STACK} --region ${AWS_REGION} --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "UNKNOWN")
+        echo "${CYAN}      • ${RELATED_STACK} (${RELATED_STATUS})${NC}"
+        
+        if [ "${RELATED_STATUS}" == "DELETE_FAILED" ] || [ "${RELATED_STATUS}" == "CREATE_FAILED" ]; then
+            echo "${YELLOW}         Forçando deleção...${NC}"
+            aws cloudformation delete-stack --stack-name ${RELATED_STACK} --region ${AWS_REGION} 2>/dev/null || true
+            ORPHAN_FOUND=true
+        elif [ "${RELATED_STATUS}" == "DELETE_IN_PROGRESS" ]; then
+            echo "${CYAN}         Já em processo de deleção${NC}"
+        fi
+    done
+else
+    echo "${GREEN}   ✅ Nenhuma stack relacionada encontrada${NC}"
 fi
 
 # Verificar ENIs (Elastic Network Interfaces) órfãs

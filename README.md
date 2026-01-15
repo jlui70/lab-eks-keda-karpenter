@@ -100,7 +100,26 @@ nano deployment/environmentVariables.sh
 - Karpenter: `v1.0.1`
 - KEDA: `v2.15.1`
 
-### 3️⃣ Execute Deployment Completo
+### 3️⃣ (Recomendado) Execute Pré-Verificação
+
+⚠️ **IMPORTANTE:** Se você já executou este lab anteriormente e fez cleanup, execute a pré-verificação para garantir que não há recursos órfãos:
+
+```bash
+./scripts/pre-install-check.sh
+```
+
+Este script vai:
+- ✅ Verificar se o cluster já existe
+- ✅ Limpar CloudFormation stacks órfãs (`DELETE_FAILED`)
+- ✅ Remover VPCs órfãs
+- ✅ Deletar IAM Roles órfãs
+
+💡 **Quando executar:**
+- Sempre que tentar reinstalar após um cleanup
+- Se encontrar erro de "Stack already exists"
+- Se o cleanup anterior falhou
+
+### 4️⃣ Execute Deployment Completo
 
 ```bash
 chmod +x deployment/_main.sh
@@ -115,7 +134,8 @@ Etapa 2/4: Karpenter ............ 3-5 min
 Etapa 3/4: KEDA ................. 2-3 min
 Etapa 4/4: AWS Services ......... 1 min
 ```
-### 📈 Monitoramento em Tempo Real
+
+---
 
 #### 🛠️ Opção 1: Usando K9s (Recomendado)
 
@@ -366,6 +386,37 @@ O script remove:
 - ✅ CloudFormation stacks
 
 ⏱️ **Tempo: ~10-15 minutos**
+
+### 🔧 Troubleshooting do Cleanup
+
+**Problema: Cleanup termina mas stacks ficam em DELETE_FAILED**
+
+Isso pode acontecer se houver dependências entre recursos. O cleanup agora força a deleção, mas você pode precisar verificar:
+
+```bash
+# 1. Verificar stacks órfãs
+aws cloudformation list-stacks \
+  --stack-status-filter DELETE_FAILED CREATE_FAILED \
+  --region us-east-1 \
+  --query 'StackSummaries[?contains(StackName, `eks-demo-scale-v2`)].{Name:StackName,Status:StackStatus}'
+
+# 2. Se encontrar stacks órfãas, execute o script de pré-verificação
+./scripts/pre-install-check.sh
+```
+
+**Recursos órfãos comuns (NÃO geram custo):**
+- ✅ CloudFormation stacks em DELETE_FAILED (sem custo)
+- ✅ VPC sem recursos ativos (sem custo)
+- ✅ Security Groups órfãos (sem custo)
+- ✅ IAM Roles/Policies (sem custo)
+
+**Recursos que GERAM custo (são sempre deletados primeiro):**
+- ❌ EC2 Instances
+- ❌ NAT Gateways
+- ❌ EKS Control Plane
+- ❌ Load Balancers
+
+💡 **Dica:** Se quiser verificar manualmente se há custos, acesse o [AWS Cost Explorer](https://console.aws.amazon.com/cost-management/home?#/home)
 
 ---
 
