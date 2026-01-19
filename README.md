@@ -6,7 +6,6 @@
   </a>
 </p>
 
-> 🎬 **[Veja a animação completa da arquitetura](img/aws_kedakarpenter_arch_small.gif)** 
 
 <p align="center">
   <img src="https://img.shields.io/badge/AWS-EKS_1.31-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white" />
@@ -17,6 +16,7 @@
   <img src="https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
 </p>
 
+> 🎬 **[Veja a animação completa da arquitetura](img/aws_kedakarpenter_arch_small.gif)** 
 ---
 
 ## 📋 Sobre o Projeto
@@ -25,9 +25,6 @@ Este lab demonstra **autoscaling avançado no Kubernetes** usando:
 - **AWS EKS** 1.31
 - **Karpenter** 1.0.1 (Node Autoscaling)
 - **KEDA** 2.15.1 (Pod Autoscaling)
-
-> 🎬 **[Veja a animação completa da arquitetura](img/aws_kedakarpenter_arch_small.gif)** 
-
 
 ### 🎯 Cenários Validados
 
@@ -52,8 +49,8 @@ Este lab demonstra **autoscaling avançado no Kubernetes** usando:
 ## 🎯 Features atualizadas
 
 | # | Solução Implementada |
-|---|-------------------|---------------------|
-| 1 | ✅ Karpenter aualizado para **v1.0.1** com APIs `v1` estáveis |
+|---|---------------------|
+| 1 | ✅ Karpenter atualizado para **v1.0.1** com APIs `v1` estáveis |
 | 2 | ✅ Migrado para **NodePool** e **EC2NodeClass** |
 | 3 | ✅ Atualizado para **KEDA v2.15.1** com API estável |
 | 4 | ✅ Configuração automática de tags em subnets e SGs |
@@ -149,7 +146,7 @@ Etapa 4/4: AWS Services ......... 1 min
 
 ### ⚙️ Preparação do ambiente para visualização do teste
 
-#### 🛠️ Opção 1: Usando K9s (Recomendado)
+#### 🛠️ Opção usando K9s (Recomendado)
 
 **K9s** é uma interface CLI interativa para Kubernetes que facilita muito a visualização e navegação dos recursos.
 
@@ -290,7 +287,7 @@ kubectl apply -f deployment/app/scaledobject.yaml
 
 O projeto inclui stack completa de monitoramento com 2 dashboards profissionais:
 
-#### **1. SQS Payments Dashboard**
+#### ** SQS Payments Dashboard**
 - 📨 Mensagens processadas em tempo real
 - 🚀 Número de pods ativos (KEDA scaling)
 - 💻 Utilização de CPU/Memória
@@ -299,7 +296,7 @@ O projeto inclui stack completa de monitoramento com 2 dashboards profissionais:
 
 ### 📍 Acessar Grafana
 
-# Port-Forward (local)
+## Port-Forward (local)
 kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring
 ```
 
