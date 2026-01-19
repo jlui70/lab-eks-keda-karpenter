@@ -1,4 +1,12 @@
-# 🚀 EKS Autoscaling com KEDA e Karpenter v2
+# 🚀 EKS Autoscaling com KEDA e Karpenter
+
+<p align="center">
+  <a href="img/aws_kedakarpenter_arch_small.gif">
+    <img src="img/aws_kedakarpenter_arch_static.png" alt="Arquitetura EKS KEDA Karpenter" width="800" />
+  </a>
+</p>
+
+> 🎬 **[Veja a animação completa da arquitetura](img/aws_kedakarpenter_arch_small.gif)** 
 
 <p align="center">
   <img src="https://img.shields.io/badge/AWS-EKS_1.31-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white" />
@@ -18,13 +26,16 @@ Este lab demonstra **autoscaling avançado no Kubernetes** usando:
 - **Karpenter** 1.0.1 (Node Autoscaling)
 - **KEDA** 2.15.1 (Pod Autoscaling)
 
+> 🎬 **[Veja a animação completa da arquitetura](img/aws_kedakarpenter_arch_small.gif)** 
+
+
 ### 🎯 Cenários Validados
 
 #### 1. 📊 **Processamento de Filas SQS**
 - ✅ Escala automática de **1 → 50+ pods** baseado em mensagens SQS
 - ✅ KEDA monitora fila FIFO em tempo real
 - ✅ Karpenter provisiona novos nós em **60-90 segundos**
-- ✅ Persistência no DynamoDB
+- ✅ Processamento de pagamentos com persistência no DynamoDB
 
 #### 2. 🖥️ **Node Scaling com Karpenter**
 - ✅ Provisionamento automático de nodes EC2
@@ -34,24 +45,22 @@ Este lab demonstra **autoscaling avançado no Kubernetes** usando:
 ---
 ## ✨ **VERSÃO CORRIGIDA E FUNCIONAL**
 
-> **Esta é a versão 2.0 do lab**, completamente refatorada e testada com as APIs mais recentes do Karpenter e KEDA.
+> **Esta é a versão atualizada do lab Eks-Keda_karpenter**, completamente refatorada e testada com as APIs mais recentes do Karpenter e KEDA.
 
 ---
 
-## 🎯 O que foi corrigido?
+## 🎯 Features atualizadas
 
-### 🔧 **Problemas Resolvidos**
-
-| # | Problema Original | Solução Implementada |
+| # | Solução Implementada |
 |---|-------------------|---------------------|
-| 1 | **Karpenter v0.16.3 com APIs depreciadas** | ✅ Atualizado para **v1.0.1** com APIs `v1` estáveis |
-| 2 | **Provisioner e AWSNodeTemplate não existem mais** | ✅ Migrado para **NodePool** e **EC2NodeClass** |
-| 3 | **KEDA v1.x com funcionalidades limitadas** | ✅ Atualizado para **KEDA v2.15.1** com API estável |
-| 4 | **Tags de discovery mal configuradas** | ✅ Configuração automática de tags em subnets e SGs |
-| 5 | **IRSA mal configurado** | ✅ Trust policies corrigidas e testadas |
-| 6 | **Recursos dos pods insuficientes** | ✅ Pods com `requests: 500m CPU` para forçar scaling |
-| 7 | **Validações faltando** | ✅ Validação completa em cada etapa |
-| 8 | **Ordem de instalação** | ✅ Dependências verificadas automaticamente |
+| 1 | ✅ Karpenter aualizado para **v1.0.1** com APIs `v1` estáveis |
+| 2 | ✅ Migrado para **NodePool** e **EC2NodeClass** |
+| 3 | ✅ Atualizado para **KEDA v2.15.1** com API estável |
+| 4 | ✅ Configuração automática de tags em subnets e SGs |
+| 5 | ✅ Trust policies corrigidas e testadas |
+| 6 | ✅ Pods com `requests: 500m CPU` para forçar scaling |
+| 7 | ✅ Validação completa em cada etapa |
+| 8 | ✅ Dependências verificadas automaticamente |
 
 ---
 
@@ -136,6 +145,9 @@ Etapa 4/4: AWS Services ......... 1 min
 ```
 
 ---
+## 🧪 Executando os Testes
+
+### ⚙️ Preparação do ambiente para visualização do teste
 
 #### 🛠️ Opção 1: Usando K9s (Recomendado)
 
@@ -203,8 +215,6 @@ watch -n 5 'aws sqs get-queue-attributes \
 - Pressione `Ctrl+C` para voltar ou sair
 
 ---
-
-## 🧪 Executando os Testes
 
 ### 📊 Teste SQS Scaling
 
@@ -287,13 +297,6 @@ O projeto inclui stack completa de monitoramento com 2 dashboards profissionais:
 - ⚡ Taxa de processamento (msgs/s)
 - 📊 Histórico de scaling
 
-#### **2. EKS E-commerce Dashboard**
-- 🌐 HTTP requests por segundo
-- ⏱️ Latência de resposta (p50, p95, p99)
-- 📈 Pods scaling timeline
-- 🖥️ Nodes provisionados pelo Karpenter
-- 💾 Utilização de recursos
-
 ### 📍 Acessar Grafana
 
 # Port-Forward (local)
@@ -330,37 +333,6 @@ karpenter_nodes_total
 ```
 
 📚 **Documentação completa**: [monitoring/README.md](monitoring/README.md)
-
----
-
-### 🔍 Troubleshooting Rápido
-
-**Problema: Pods não escalam**
-```bash
-# Verificar logs do KEDA
-kubectl logs -n keda -l app.kubernetes.io/name=keda-operator --tail=50
-
-# Verificar ScaledObject
-kubectl describe scaledobject -n keda-test
-```
-
-**Problema: Karpenter não cria nodes**
-```bash
-# Verificar logs do Karpenter
-kubectl logs -n kube-system -l app.kubernetes.io/name=karpenter --tail=50
-
-# Verificar NodePool
-kubectl describe nodepool default
-```
-
-**Problema: Pods ficam Pending**
-```bash
-# Ver eventos
-kubectl get events -n keda-test --sort-by='.lastTimestamp'
-
-# Ver por que pod não foi agendado
-kubectl describe pod <pod-name> -n keda-test
-```
 
 ---
 
@@ -447,17 +419,6 @@ aws cloudformation list-stacks \
 ### 📚 Versão Original
 
 **Projeto Base:** [aws-samples/amazon-eks-scaling-with-keda-and-karpenter](https://github.com/aws-samples/amazon-eks-scaling-with-keda-and-karpenter)
-
-### ✨ Melhorias nesta Versão v2
-
-- ✅ Instalação 100% automatizada (cluster → monitoring)
-- ✅ EBS CSI Driver configurado automaticamente
-- ✅ KEDA atualizado para v2.15.1 (API estável v1alpha1)
-- ✅ Namespaces e recursos Karpenter corrigidos
-- ✅ Scripts validados e testados end-to-end
-- ✅ Documentação completa em português
-- ✅ Troubleshooting detalhado
-- ✅ Stack de monitoring com Grafana + Prometheus
 
 ### 🌟 Tecnologias Utilizadas
 
