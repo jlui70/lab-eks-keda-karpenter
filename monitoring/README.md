@@ -19,17 +19,6 @@ A stack de monitoramento é **instalada automaticamente** durante o deployment c
 ./deployment/_main.sh
 ```
 
-Selecione a opção **3** (Deployment Completo) que inclui:
-1. ✅ Cluster EKS
-2. ✅ Karpenter
-3. ✅ KEDA
-4. ✅ Serviços AWS (SQS + DynamoDB)
-5. ✅ **Prometheus + Grafana** (automático)
-
-**Tempo total**: ~25 minutos (incluindo todo o lab)
-
----
-
 ## 📈 Dashboard Disponível
 
 ### 📊 SQS Payments Dashboard
