@@ -21,7 +21,21 @@
 
 ## 📋 Sobre o Projeto
 
-Neste lab montei uma poc demonstrando **autoscaling avançado no Kubernetes** usando Karpenter e Keda para demonstrar a eficácia do provisionamento automático criei um cenário de testes durante uma Black Friday, utilizei mensagens SQS simulando (cada msg uma compra) um aumento significativo de comprars num curto periodo de tempo exigindo que os recursos fossem provisionados rapidamente e o sistema de e-commerce permanecesse em pleno funcionamento e após a normalização das comprar acontece tambem de forma automatica o Scale-down dos recursos mosrando a eficacia da solução.
+Este laboratório apresenta uma **Proof of Concept (POC)** que demonstra a eficácia do **autoscaling avançado no Kubernetes** utilizando **KEDA** (Kubernetes Event-Driven Autoscaling) e **Karpenter** em um cenário realista de alta demanda.
+
+Para validar a solução, simulei um ambiente de **Black Friday** em um sistema de e-commerce, onde:
+
+- **📨 Mensagens SQS** representam compras em tempo real
+- **⚡ Picos de carga** simulam o aumento exponencial de transações
+- **🎯 Objetivo:** Garantir que o sistema provisione recursos automaticamente para manter a disponibilidade durante o pico de demanda
+
+### 🔄 Fluxo de Autoscaling Validado
+
+1. **Scale-Up:** Ao detectar mensagens na fila SQS, o KEDA dispara o escalonamento horizontal dos pods (de 1 até 50+), enquanto o Karpenter provisiona novos nós EC2 em menos de 90 segundos
+2. **Resiliência:** O sistema processa milhares de transações mantendo alta disponibilidade
+3. **Scale-Down:** Após a normalização da carga, tanto pods quanto nós são reduzidos automaticamente, otimizando custos
+
+✅ **Resultado:** A POC comprova que a combinação KEDA + Karpenter oferece elasticidade eficiente e econômica para cargas de trabalho orientadas a eventos.
 
 ### 🎯 Cenários Validados
 
