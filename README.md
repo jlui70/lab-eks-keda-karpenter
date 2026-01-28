@@ -21,10 +21,7 @@
 
 ## 📋 Sobre o Projeto
 
-Este lab demonstra **autoscaling avançado no Kubernetes** usando:
-- **AWS EKS** 1.31
-- **Karpenter** 1.0.1 (Node Autoscaling)
-- **KEDA** 2.15.1 (Pod Autoscaling)
+Neste lab montei uma poc demonstrando **autoscaling avançado no Kubernetes** usando Karpenter e Keda para demonstrar a eficácia do provisionamento automático criei um cenário de testes durante uma Black Friday, utilizei mensagens SQS simulando (cada msg uma compra) um aumento significativo de comprars num curto periodo de tempo exigindo que os recursos fossem provisionados rapidamente e o sistema de e-commerce permanecesse em pleno funcionamento e após a normalização das comprar acontece tambem de forma automatica o Scale-down dos recursos mosrando a eficacia da solução.
 
 ### 🎯 Cenários Validados
 
