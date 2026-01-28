@@ -40,7 +40,7 @@ Este lab demonstra **autoscaling avançado no Kubernetes** usando:
 - ✅ Suporte a múltiplos instance types (m5.large, m5.xlarge, m5.2xlarge)
 
 ---
-## ✨ **VERSÃO CORRIGIDA E FUNCIONAL**
+## ✨ **VERSÃO ATUALIZADA**
 
 > **Esta é a versão atualizada do lab Eks-Keda_karpenter**, completamente refatorada e testada com as APIs mais recentes do Karpenter e KEDA.
 
