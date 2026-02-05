@@ -140,8 +140,6 @@ kubectl rollout restart deployment monitoring-grafana -n monitoring
 
 - [Prometheus Operator](https://prometheus-operator.dev/)
 - [Grafana Dashboards](https://grafana.com/grafana/dashboards/)
-- [KEDA Metrics](https://keda.sh/docs/latest/operate/prometheus/)
-- [Karpenter Metrics](https://karpenter.sh/docs/concepts/metrics/)
 
 **LoadBalancer (se habilitado):**
 - ~$0.025/hora (~$18/mês)
