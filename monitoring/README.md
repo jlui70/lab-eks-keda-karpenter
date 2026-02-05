@@ -81,6 +81,19 @@ Após acessar o Grafana:
 
 💡 **Nota**: Este é o único dashboard instalado. Os dashboards padrão do kube-prometheus-stack foram desabilitados para manter o foco apenas no projeto KEDA + Karpenter.
 
+### 🧹 Troubleshooting: Múltiplos Dashboards
+
+Se você ainda vê múltiplos dashboards padrão (Alertmanager, CoreDNS, Kubernetes/*, Node Exporter/*, etc.), execute o script de limpeza:
+
+```bash
+chmod +x cleanup-default-dashboards.sh
+./cleanup-default-dashboards.sh
+```
+
+Isso remove todos os dashboards padrão, mantendo apenas o customizado do projeto. Após executar, aguarde 30 segundos e faça login novamente no Grafana.
+
+---
+
 O dashboard mostra em tempo real:
 - Mensagens processadas
 - Pods escalando conforme carga
