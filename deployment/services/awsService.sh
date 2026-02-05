@@ -6,7 +6,7 @@
 set -e  # Exit on error
 
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${GREEN}║          CRIANDO RECURSOS AWS (SQS & DYNAMODB)           ║${NC}"
+echo "${GREEN}║          CRIANDO RECURSOS AWS (SQS & DYNAMODB)             ║${NC}"
 echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -145,7 +145,7 @@ cat /tmp/aws-resources-info.txt
 
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${GREEN}║        RECURSOS AWS CRIADOS COM SUCESSO!                  ║${NC}"
+echo "${GREEN}║        RECURSOS AWS CRIADOS COM SUCESSO!                   ║${NC}"
 echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

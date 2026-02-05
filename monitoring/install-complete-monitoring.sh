@@ -10,7 +10,7 @@ set -e  # Exit on error
 source $(dirname "$0")/../deployment/environmentVariables.sh
 
 echo "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${BLUE}║     INSTALAÇÃO COMPLETA: MONITORING STACK                 ║${NC}"
+echo "${BLUE}║     INSTALAÇÃO COMPLETA: MONITORING STACK                  ║${NC}"
 echo "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -146,7 +146,7 @@ fi
 
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${GREEN}║         MONITORING STACK INSTALADO COM SUCESSO!           ║${NC}"
+echo "${GREEN}║         MONITORING STACK INSTALADO COM SUCESSO!            ║${NC}"
 echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

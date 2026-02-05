@@ -22,7 +22,7 @@ APP_DIR="${SCRIPT_DIR}/../../app/keda"
 
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${GREEN}║         BUILD & PUSH DOCKER IMAGE TO ECR                 ║${NC}"
+echo "${GREEN}║         BUILD & PUSH DOCKER IMAGE TO ECR                   ║${NC}"
 echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -136,6 +136,6 @@ fi
 echo ""
 
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${GREEN}║          ✅ BUILD & PUSH CONCLUÍDO COM SUCESSO!           ║${NC}"
+echo "${GREEN}║          ✅ BUILD & PUSH CONCLUÍDO COM SUCESSO!            ║${NC}"
 echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""

@@ -7,7 +7,7 @@
 set -e  # Exit on error
 
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${GREEN}║              INSTALANDO KEDA v2.15+                       ║${NC}"
+echo "${GREEN}║              INSTALANDO KEDA v2.15+                        ║${NC}"
 echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -286,7 +286,7 @@ EOF
 echo "${GREEN}✅ ScaledObject criado com API v1alpha1 (KEDA 2.15.1)${NC}"
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo "${GREEN}║            KEDA INSTALADO COM SUCESSO!                    ║${NC}"
+echo "${GREEN}║            KEDA INSTALADO COM SUCESSO!                     ║${NC}"
 echo "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
