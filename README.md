@@ -307,19 +307,6 @@ O projeto inclui stack completa de monitoramento com dashboard profissional:
 - 🖥️ Nodes provisionados pelo Karpenter
 - 📈 Status dos pods (Running, Pending, Failed)
 
-💡 **Sobre outros dashboards**: Os dashboards padrão do kube-prometheus-stack foram desabilitados para manter o foco apenas no dashboard específico deste projeto de KEDA + Karpenter.
-
-### 🧹 Remover Dashboards Extras (Se Necessário)
-
-Se você ainda vê múltiplos dashboards padrão do Grafana após a instalação, execute:
-
-```bash
-chmod +x monitoring/cleanup-default-dashboards.sh
-./monitoring/cleanup-default-dashboards.sh
-```
-
-Este script remove todos os dashboards padrão do kube-prometheus-stack, mantendo apenas o dashboard customizado do projeto.
-
 ### 📍 Acessar Grafana
 
 ## Port-Forward (local)
