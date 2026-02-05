@@ -416,7 +416,6 @@ aws cloudformation list-stacks \
 
 ## 🔗 Links Úteis
 
-- [Karpenter v1 Migration Guide](https://karpenter.sh/docs/upgrading/v1-migration/)
 - [KEDA v2 ScaledObject Spec](https://keda.sh/docs/latest/concepts/scaling-deployments/)
 - [AWS EKS Best Practices](https://aws.github.io/aws-eks-best-practices/)
 
