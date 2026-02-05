@@ -294,24 +294,20 @@ kubectl apply -f deployment/app/scaledobject.yaml
 
 ## 📊 Monitoramento com Prometheus + Grafana
 
-### 🎨 Dashboards Customizados
+### 🎨 Dashboard Customizado
 
-O projeto inclui stack completa de monitoramento com dashboards profissionais:
+O projeto inclui stack completa de monitoramento com dashboard profissional:
 
 #### 📊 EKS Payment Processing - KEDA + Karpenter (SQS)
 - 📨 Mensagens processadas em tempo real
 - 🚀 Número de pods ativos (KEDA scaling)
-- 💻 Utilização de CPU/Memória
+- 💻 Utilização de CPU/Memória por pod
 - ⚡ Taxa de processamento (msgs/s)
-- 📊 Histórico de scaling
-
-#### 📈 EKS E-Commerce - KEDA Autoscaling Monitor
-- 📊 Status dos pods por fase
+- 📊 Histórico de scaling em tempo real
 - 🖥️ Nodes provisionados pelo Karpenter
-- 💾 Uso de recursos do cluster
-- 📡 Tráfego de rede
+- 📈 Status dos pods (Running, Pending, Failed)
 
-💡 **Nota**: A instalação também inclui ~30 dashboards padrão do kube-prometheus-stack para monitoramento geral do cluster Kubernetes.
+💡 **Sobre outros dashboards**: Os dashboards padrão do kube-prometheus-stack foram desabilitados para manter o foco apenas no dashboard específico deste projeto de KEDA + Karpenter.
 
 ### 📍 Acessar Grafana
 

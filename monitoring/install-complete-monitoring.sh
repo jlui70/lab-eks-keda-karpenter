@@ -110,22 +110,11 @@ if [ -f "${SCRIPT_DIR}/grafana-dashboard-sqs-payments.json" ]; then
       grafana_dashboard=1 \
       -n monitoring --overwrite >/dev/null 2>&1
     
-    echo "${GREEN}   ✅ Dashboard: SQS Payments${NC}"
+    echo "${GREEN}   ✅ Dashboard: EKS Payment Processing - KEDA + Karpenter (SQS)${NC}"
 fi
 
-# Dashboard EKS E-commerce
-if [ -f "${SCRIPT_DIR}/grafana-dashboard-eks-ecommerce.json" ]; then
-    kubectl create configmap grafana-dashboard-eks-ecommerce \
-      --from-file=dashboard.json=${SCRIPT_DIR}/grafana-dashboard-eks-ecommerce.json \
-      -n monitoring \
-      --dry-run=client -o yaml | kubectl apply -f - >/dev/null 2>&1
-    
-    kubectl label configmap grafana-dashboard-eks-ecommerce \
-      grafana_dashboard=1 \
-      -n monitoring --overwrite >/dev/null 2>&1
-    
-    echo "${GREEN}   ✅ Dashboard: EKS E-commerce${NC}"
-fi
+echo "${CYAN}   Dashboard customizado do projeto importado com sucesso!${NC}"
+echo ""
 
 # Reiniciar Grafana para carregar dashboards
 echo "${CYAN}   Reiniciando Grafana...${NC}"
@@ -190,10 +179,8 @@ echo "${CYAN}   Comando: kubectl port-forward svc/monitoring-kube-prometheus-pro
 echo "${CYAN}   URL: http://localhost:9090${NC}"
 echo ""
 
-echo "${GREEN}📋 Dashboards Disponíveis no Grafana:${NC}"
-echo "${CYAN}   1. EKS Payment Processing - KEDA + Karpenter (SQS)${NC}"
-echo "${CYAN}   2. EKS E-Commerce - KEDA Autoscaling Monitor${NC}"
-echo "${CYAN}   3. Kubernetes Dashboards - Pré-instalados (Cluster, Pods, Nodes)${NC}"
+echo "${GREEN}📋 Dashboard Disponível no Grafana:${NC}"
+echo "${CYAN}   • EKS Payment Processing - KEDA + Karpenter (SQS)${NC}"
 echo ""
 
 echo "${YELLOW}🎯 Para DEMONSTRAÇÃO:${NC}"

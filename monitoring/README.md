@@ -6,7 +6,7 @@ Stack completa de monitoramento para visualização de métricas KEDA e Karpente
 
 - **Prometheus**: Coleta de métricas do cluster
 - **Grafana**: Visualização e dashboards
-- **Dashboards Customizados**: SQS Payments para monitoramento do teste de scaling
+- **Dashboard Customizado**: EKS Payment Processing - KEDA + Karpenter (SQS) para monitoramento completo do teste de scaling
 
 ## 🚀 Instalação
 
@@ -79,7 +79,7 @@ Após acessar o Grafana:
 2. **Menu**: Dashboards → Browse
 3. **Selecione**: "EKS Payment Processing - KEDA + Karpenter (SQS)"
 
-💡 **Nota**: O kube-prometheus-stack instala ~30 dashboards padrão do Kubernetes. Use o filtro de busca para encontrar rapidamente o dashboard do projeto.
+💡 **Nota**: Este é o único dashboard instalado. Os dashboards padrão do kube-prometheus-stack foram desabilitados para manter o foco apenas no projeto KEDA + Karpenter.
 
 O dashboard mostra em tempo real:
 - Mensagens processadas
