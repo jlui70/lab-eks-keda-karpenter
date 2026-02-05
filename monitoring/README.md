@@ -31,26 +31,6 @@ A stack de monitoramento é **instalada automaticamente** durante o deployment c
 - 📊 Histórico de scaling
 - 🖥️ Nodes provisionados pelo Karpenter
 
-**Queries Prometheus principais:**
-```promql
-# Pods ativos do deployment
-kube_deployment_status_replicas{deployment="sqs-app", namespace="keda-test"}
-
-# Pods desejados pelo KEDA/HPA
-kube_deployment_spec_replicas{deployment="sqs-app", namespace="keda-test"}
-
-# CPU usage dos pods
-sum(rate(container_cpu_usage_seconds_total{namespace="keda-test", pod=~"sqs-app.*", container!=""}[5m])) by (pod)
-
-# Memory usage dos pods
-sum(container_memory_working_set_bytes{namespace="keda-test", pod=~"sqs-app.*", container!=""}) by (pod)
-
-# Total de nodes no cluster
-count(kube_node_info)
-
-# Métricas do KEDA (se disponíveis)
-keda_scaler_active{scaledObject="sqs-scaledobject"}
-```
 
 ## 🔑 Acesso ao Grafana
 
@@ -79,21 +59,7 @@ Após acessar o Grafana:
 2. **Menu**: Dashboards → Browse
 3. **Selecione**: "EKS Payment Processing - KEDA + Karpenter (SQS)"
 
-💡 **Nota**: Este é o único dashboard instalado. Os dashboards padrão do kube-prometheus-stack foram desabilitados para manter o foco apenas no projeto KEDA + Karpenter.
-
-### 🧹 Troubleshooting: Múltiplos Dashboards
-
-Se você ainda vê múltiplos dashboards padrão (Alertmanager, CoreDNS, Kubernetes/*, Node Exporter/*, etc.), execute o script de limpeza:
-
-```bash
-chmod +x cleanup-default-dashboards.sh
-./cleanup-default-dashboards.sh
 ```
-
-Isso remove todos os dashboards padrão, mantendo apenas o customizado do projeto. Após executar, aguarde 30 segundos e faça login novamente no Grafana.
-
----
-
 O dashboard mostra em tempo real:
 - Mensagens processadas
 - Pods escalando conforme carga
@@ -112,23 +78,22 @@ Acesse: `http://localhost:9090`
 
 ### Queries Úteis
 
-```promql
-# Verificar se KEDA está exportando métricas
-up{job="keda-operator"}
-
-# Ver ScaledObjects ativos
-keda_scaledobject_paused
-
-# Mensagens SQS
-aws_sqs_approximate_number_of_messages
-
-# Pods KEDA
-kube_deployment_status_replicas{namespace="keda-test"}
-
 # Nodes Karpenter
 karpenter_nodes_total
-```
 
+# Pods ativos do deployment
+kube_deployment_status_replicas{deployment="sqs-app", namespace="keda-test"}
+
+# CPU usage dos pods
+sum(rate(container_cpu_usage_seconds_total{namespace="keda-test", pod=~"sqs-app.*", container!=""}[5m])) by (pod)
+
+# Memory usage dos pods
+sum(container_memory_working_set_bytes{namespace="keda-test", pod=~"sqs-app.*", container!=""}) by (pod)
+
+# Total de nodes no cluster
+count(kube_node_info)
+
+```
 ## 🔍 Troubleshooting
 
 ### Problema: Grafana não carrega
@@ -162,25 +127,6 @@ kubectl rollout restart deployment monitoring-grafana -n monitoring
    kubectl get pods -n keda-test
    kubectl get pods -n monitoring
    ```
-
-## ✅ Validação Rápida
-
-```bash
-# 1. Prometheus rodando?
-kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus
-
-# 2. Grafana rodando?
-kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana
-
-# 3. Dashboard importado?
-# Acesse Grafana → Dashboards → Browse
-# Deve aparecer: "SQS Payments Dashboard"
-
-# 4. Métricas disponíveis?
-kubectl port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring
-# Acesse: http://localhost:9090
-# Execute query: kube_deployment_status_replicas{namespace="keda-test"}
-```
 
 ## 💰 Custos
 

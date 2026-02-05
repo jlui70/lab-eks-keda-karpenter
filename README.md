@@ -348,9 +348,6 @@ Acesse: **http://localhost:9090**
 # Pods ativos do deployment
 kube_deployment_status_replicas{deployment="sqs-app", namespace="keda-test"}
 
-# Pods desejados pelo KEDA
-kube_deployment_spec_replicas{deployment="sqs-app", namespace="keda-test"}
-
 # Total de nodes
 count(kube_node_info)
 
