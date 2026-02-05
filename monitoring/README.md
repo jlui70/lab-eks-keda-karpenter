@@ -78,19 +78,19 @@ Acesse: `http://localhost:9090`
 
 ### Queries Úteis
 
-# Nodes Karpenter
+### Nodes Karpenter
 karpenter_nodes_total
 
-# Pods ativos do deployment
+### Pods ativos do deployment
 kube_deployment_status_replicas{deployment="sqs-app", namespace="keda-test"}
 
-# CPU usage dos pods
+### CPU usage dos pods
 sum(rate(container_cpu_usage_seconds_total{namespace="keda-test", pod=~"sqs-app.*", container!=""}[5m])) by (pod)
 
-# Memory usage dos pods
+### Memory usage dos pods
 sum(container_memory_working_set_bytes{namespace="keda-test", pod=~"sqs-app.*", container!=""}) by (pod)
 
-# Total de nodes no cluster
+### Total de nodes no cluster
 count(kube_node_info)
 
 ```
