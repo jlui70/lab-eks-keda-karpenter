@@ -296,7 +296,7 @@ kubectl apply -f deployment/app/scaledobject.yaml
 
 ### 🎨 Dashboards Customizados
 
-O projeto inclui stack completa de monitoramento com 2 dashboards profissionais:
+O projeto inclui stack completa de monitoramento com dashboard profissional:
 
 #### ** SQS Payments Dashboard**
 - 📨 Mensagens processadas em tempo real
