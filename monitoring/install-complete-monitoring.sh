@@ -53,6 +53,8 @@ helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
   --set grafana.sidecar.dashboards.enabled=true \
   --set grafana.sidecar.dashboards.label=grafana_dashboard \
   --set grafana.sidecar.dashboards.searchNamespace=monitoring \
+  --set grafana.defaultDashboardsEnabled=false \
+  --set grafana.defaultDashboardsTimezone=America/Sao_Paulo \
   --wait --timeout=600s
 
 echo "${GREEN}   ✅ Prometheus + Grafana instalados${NC}"

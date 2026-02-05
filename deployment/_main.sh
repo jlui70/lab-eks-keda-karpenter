@@ -204,7 +204,7 @@ echo "${GREEN}║    ✅ DEPLOYMENT COMPLETO + MONITORING CONCLUÍDO!         �
         echo ""
         echo "   ${GREEN}2. Acessar Grafana:${NC}"
         echo "      kubectl port-forward svc/monitoring-grafana 3000:80 -n monitoring"
-        echo "      Acesse: http://localhost:3000 (admin/admin)"
+        echo "      Acesse: http://localhost:3000 (admin/admin123)"
         echo ""
         echo "   ${GREEN}3. Executar teste de carga SQS:${NC}"
         echo "      cd tests && ./run-load-test.sh"
@@ -213,7 +213,7 @@ echo "${GREEN}║    ✅ DEPLOYMENT COMPLETO + MONITORING CONCLUÍDO!         �
         echo "      • Terminal 1 - HPA: watch -n 2 'kubectl get hpa -n keda-test'"
         echo "      • Terminal 2 - Pods: watch -n 2 'kubectl get pods -n keda-test'"
         echo "      • Terminal 3 - Nodes: watch -n 2 'kubectl get nodes'"
-        echo "      • Terminal 4 - Fila SQS: watch -n 5 'aws sqs get-queue-attributes --queue-url https://sqs.us-east-1.amazonaws.com/794038226274/keda-demo-queue.fifo --attribute-names ApproximateNumberOfMessages --query "Attributes.ApproximateNumberOfMessages" --output text'
+        echo "      • Terminal 4 - Fila SQS: watch -n 5 'aws sqs get-queue-attributes --queue-url https://sqs.us-east-1.amazonaws.com/794038226274/keda-demo-queue.fifo --attribute-names ApproximateNumberOfMessages --query \"Attributes.ApproximateNumberOfMessages\" --output text'"
 
         echo ""
         echo "${YELLOW}💰 Lembre-se:${NC} Após os testes, execute ./scripts/cleanup.sh para remover recursos e evitar custos!"

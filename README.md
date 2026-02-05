@@ -296,14 +296,22 @@ kubectl apply -f deployment/app/scaledobject.yaml
 
 ### 🎨 Dashboards Customizados
 
-O projeto inclui stack completa de monitoramento com dashboard profissional:
+O projeto inclui stack completa de monitoramento com dashboards profissionais:
 
-#### ** SQS Payments Dashboard**
+#### 📊 EKS Payment Processing - KEDA + Karpenter (SQS)
 - 📨 Mensagens processadas em tempo real
 - 🚀 Número de pods ativos (KEDA scaling)
 - 💻 Utilização de CPU/Memória
 - ⚡ Taxa de processamento (msgs/s)
 - 📊 Histórico de scaling
+
+#### 📈 EKS E-Commerce - KEDA Autoscaling Monitor
+- 📊 Status dos pods por fase
+- 🖥️ Nodes provisionados pelo Karpenter
+- 💾 Uso de recursos do cluster
+- 📡 Tráfego de rede
+
+💡 **Nota**: A instalação também inclui ~30 dashboards padrão do kube-prometheus-stack para monitoramento geral do cluster Kubernetes.
 
 ### 📍 Acessar Grafana
 
@@ -330,15 +338,23 @@ Acesse: **http://localhost:9090**
 
 **Queries úteis:**
 ```promql
-# Mensagens na fila SQS
-aws_sqs_approximate_number_of_messages
+# Pods ativos do deployment
+kube_deployment_status_replicas{deployment="sqs-app", namespace="keda-test"}
 
-# Pods ativos KEDA
-kube_deployment_status_replicas{namespace="keda-test"}
+# Pods desejados pelo KEDA
+kube_deployment_spec_replicas{deployment="sqs-app", namespace="keda-test"}
 
-# Nodes Karpenter
-karpenter_nodes_total
+# Total de nodes
+count(kube_node_info)
+
+# CPU usage dos pods
+sum(rate(container_cpu_usage_seconds_total{namespace="keda-test", pod=~"sqs-app.*", container!=""}[5m])) by (pod)
+
+# Pods por status
+count(kube_pod_status_phase{namespace="keda-test"}) by (phase)
 ```
+
+💡 **Nota sobre métricas SQS**: As métricas `aws_sqs_*` são coletadas pelo KEDA internamente para autoscaling, mas não são expostas diretamente no Prometheus. Para monitorar a fila SQS, use o AWS CLI ou CloudWatch.
 
 📚 **Documentação completa**: [monitoring/README.md](monitoring/README.md)
 

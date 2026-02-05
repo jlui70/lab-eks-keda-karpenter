@@ -21,7 +21,7 @@ A stack de monitoramento é **instalada automaticamente** durante o deployment c
 
 ## 📈 Dashboard Disponível
 
-### 📊 SQS Payments Dashboard
+### 📊 EKS Payment Processing - KEDA + Karpenter (SQS)
 
 **Métricas incluídas:**
 - 📨 Mensagens na fila SQS (approximate messages)
@@ -33,17 +33,23 @@ A stack de monitoramento é **instalada automaticamente** durante o deployment c
 
 **Queries Prometheus principais:**
 ```promql
-# Mensagens na fila
-aws_sqs_approximate_number_of_messages
+# Pods ativos do deployment
+kube_deployment_status_replicas{deployment="sqs-app", namespace="keda-test"}
 
-# Pods ativos
-kube_deployment_status_replicas{deployment="sqs-app"}
+# Pods desejados pelo KEDA/HPA
+kube_deployment_spec_replicas{deployment="sqs-app", namespace="keda-test"}
 
-# CPU usage
-rate(container_cpu_usage_seconds_total{pod=~"sqs-app.*"}[5m])
+# CPU usage dos pods
+sum(rate(container_cpu_usage_seconds_total{namespace="keda-test", pod=~"sqs-app.*", container!=""}[5m])) by (pod)
 
-# Nodes Karpenter
+# Memory usage dos pods
+sum(container_memory_working_set_bytes{namespace="keda-test", pod=~"sqs-app.*", container!=""}) by (pod)
+
+# Total de nodes no cluster
 count(kube_node_info)
+
+# Métricas do KEDA (se disponíveis)
+keda_scaler_active{scaledObject="sqs-scaledobject"}
 ```
 
 ## 🔑 Acesso ao Grafana
@@ -71,7 +77,9 @@ Após acessar o Grafana:
 
 1. **Login**: admin / admin123
 2. **Menu**: Dashboards → Browse
-3. **Selecione**: "SQS Payments Dashboard"
+3. **Selecione**: "EKS Payment Processing - KEDA + Karpenter (SQS)"
+
+💡 **Nota**: O kube-prometheus-stack instala ~30 dashboards padrão do Kubernetes. Use o filtro de busca para encontrar rapidamente o dashboard do projeto.
 
 O dashboard mostra em tempo real:
 - Mensagens processadas
