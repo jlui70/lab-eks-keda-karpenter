@@ -505,6 +505,110 @@ echo "${CYAN}📊 Resumo:${NC}"
 echo "   ${GREEN}✅ Recursos deletados: ${DELETED_COUNT}${NC}"
 echo ""
 
+# ============================================================================
+# TRATAMENTO DE STACKS EM DELETE_FAILED
+# ============================================================================
+echo "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+echo "${YELLOW}  Verificando Stacks em DELETE_FAILED${NC}"
+echo "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+echo ""
+
+FAILED_STACKS=$(aws cloudformation list-stacks \
+  --stack-status-filter DELETE_FAILED \
+  --region ${AWS_REGION} \
+  --query "StackSummaries[?contains(StackName, '${CLUSTER_NAME}')].StackName" \
+  --output text 2>/dev/null)
+
+if [ ! -z "$FAILED_STACKS" ]; then
+    echo "${YELLOW}⚠️  Stacks em DELETE_FAILED encontradas:${NC}"
+    echo ""
+    
+    for FAILED_STACK in $FAILED_STACKS; do
+        echo "${CYAN}   Processando: ${FAILED_STACK}${NC}"
+        
+        # Extrair VPC ID da stack
+        VPC_ID=$(aws cloudformation describe-stack-resources \
+          --stack-name ${FAILED_STACK} \
+          --region ${AWS_REGION} \
+          --query 'StackResources[?ResourceType==`AWS::EC2::VPC`].PhysicalResourceId' \
+          --output text 2>/dev/null)
+        
+        if [ ! -z "$VPC_ID" ]; then
+            echo "${CYAN}   • VPC encontrada: ${VPC_ID}${NC}"
+            
+            # Limpar Security Groups órfãos da VPC
+            echo "${CYAN}   • Limpando Security Groups órfãos...${NC}"
+            SG_IDS=$(aws ec2 describe-security-groups \
+              --filters "Name=vpc-id,Values=${VPC_ID}" \
+              --region ${AWS_REGION} \
+              --query 'SecurityGroups[?GroupName!=`default`].GroupId' \
+              --output text 2>/dev/null)
+            
+            if [ ! -z "$SG_IDS" ]; then
+                for SG_ID in ${SG_IDS}; do
+                    # Revogar todas as regras ingress
+                    aws ec2 describe-security-groups --group-ids ${SG_ID} --region ${AWS_REGION} \
+                      --query 'SecurityGroups[0].IpPermissions' --output json 2>/dev/null | \
+                      xargs -0 -I {} aws ec2 revoke-security-group-ingress \
+                      --group-id ${SG_ID} --ip-permissions {} --region ${AWS_REGION} 2>/dev/null
+                    
+                    # Revogar todas as regras egress
+                    aws ec2 describe-security-groups --group-ids ${SG_ID} --region ${AWS_REGION} \
+                      --query 'SecurityGroups[0].IpPermissionsEgress' --output json 2>/dev/null | \
+                      xargs -0 -I {} aws ec2 revoke-security-group-egress \
+                      --group-id ${SG_ID} --ip-permissions {} --region ${AWS_REGION} 2>/dev/null
+                    
+                    # Deletar Security Group
+                    if aws ec2 delete-security-group --group-id ${SG_ID} --region ${AWS_REGION} 2>/dev/null; then
+                        echo "${GREEN}     ✅ Security Group deletado: ${SG_ID}${NC}"
+                    fi
+                done
+            fi
+            
+            # Limpar ENIs órfãs
+            echo "${CYAN}   • Limpando ENIs órfãs...${NC}"
+            ENI_IDS=$(aws ec2 describe-network-interfaces \
+              --filters "Name=vpc-id,Values=${VPC_ID}" \
+              --region ${AWS_REGION} \
+              --query 'NetworkInterfaces[*].NetworkInterfaceId' \
+              --output text 2>/dev/null)
+            
+            if [ ! -z "$ENI_IDS" ]; then
+                for ENI_ID in ${ENI_IDS}; do
+                    if aws ec2 delete-network-interface --network-interface-id ${ENI_ID} --region ${AWS_REGION} 2>/dev/null; then
+                        echo "${GREEN}     ✅ ENI deletada: ${ENI_ID}${NC}"
+                    fi
+                done
+            fi
+        fi
+        
+        # Tentar deletar a stack novamente
+        echo "${CYAN}   • Tentando deletar stack novamente...${NC}"
+        if aws cloudformation delete-stack --stack-name ${FAILED_STACK} --region ${AWS_REGION} 2>/dev/null; then
+            echo "${GREEN}   ✅ Stack em processo de deleção: ${FAILED_STACK}${NC}"
+            
+            # Aguardar alguns segundos e verificar
+            sleep 5
+            STACK_STATUS=$(aws cloudformation describe-stacks \
+              --stack-name ${FAILED_STACK} \
+              --region ${AWS_REGION} \
+              --query 'Stacks[0].StackStatus' \
+              --output text 2>&1)
+            
+            if echo "$STACK_STATUS" | grep -q "does not exist"; then
+                echo "${GREEN}   ✅ Stack deletada com sucesso!${NC}"
+            else
+                echo "${YELLOW}   ℹ️  Stack status: ${STACK_STATUS}${NC}"
+                echo "${YELLOW}   ℹ️  Aguarde alguns minutos para conclusão${NC}"
+            fi
+        fi
+        echo ""
+    done
+else
+    echo "${GREEN}✅ Nenhuma stack em DELETE_FAILED encontrada${NC}"
+fi
+echo ""
+
 # Verificação final de recursos órfãos
 echo "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
 echo "${YELLOW}  Verificação Final de Recursos Órfãos${NC}"
