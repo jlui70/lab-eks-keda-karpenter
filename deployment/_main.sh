@@ -6,8 +6,11 @@
 
 set -e  # Exit on first error
 
+# Determinar o diretório do script e do projeto
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Carregar variáveis de ambiente PRIMEIRO
-source ./environmentVariables.sh
+source "${SCRIPT_DIR}/environmentVariables.sh"
 
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
@@ -119,33 +122,33 @@ echo ""
         echo ""
         
 echo "${YELLOW}🚀 Etapa 1/6: Implantando Cluster EKS (20-25 min)...${NC}"
-chmod +x ./cluster/createCluster.sh
-./cluster/createCluster.sh
+chmod +x "${SCRIPT_DIR}/cluster/createCluster.sh"
+"${SCRIPT_DIR}/cluster/createCluster.sh"
 
 echo ""
 echo "${YELLOW}🚀 Etapa 2/6: Implantando Karpenter (5-7 min)...${NC}"
-chmod +x ./karpenter/createkarpenter.sh
-./karpenter/createkarpenter.sh
+chmod +x "${SCRIPT_DIR}/karpenter/createkarpenter.sh"
+"${SCRIPT_DIR}/karpenter/createkarpenter.sh"
 
 echo ""
 echo "${YELLOW}🚀 Etapa 3/6: Criando recursos AWS (SQS e DynamoDB)...${NC}"
-chmod +x ./services/awsService.sh 
-./services/awsService.sh
+chmod +x "${SCRIPT_DIR}/services/awsService.sh"
+"${SCRIPT_DIR}/services/awsService.sh"
 
 echo ""
 echo "${YELLOW}🚀 Etapa 4/6: Build & Push Docker Image para ECR (2-3 min)...${NC}"
-chmod +x ./app/buildDockerImage.sh
-./app/buildDockerImage.sh
+chmod +x "${SCRIPT_DIR}/app/buildDockerImage.sh"
+"${SCRIPT_DIR}/app/buildDockerImage.sh"
 
 echo ""
 echo "${YELLOW}🚀 Etapa 5/6: Implantando KEDA (3-5 min)...${NC}"
-chmod +x ./keda/createkeda.sh
-./keda/createkeda.sh
+chmod +x "${SCRIPT_DIR}/keda/createkeda.sh"
+"${SCRIPT_DIR}/keda/createkeda.sh"
 
 echo ""
 echo "${YELLOW}🚀 Etapa 6/6: Instalando Monitoring Stack (3-5 min)...${NC}"
-chmod +x ../monitoring/install-complete-monitoring.sh
-../monitoring/install-complete-monitoring.sh
+chmod +x "$(dirname "${SCRIPT_DIR}")/monitoring/install-complete-monitoring.sh"
+"$(dirname "${SCRIPT_DIR}")/monitoring/install-complete-monitoring.sh"
 
 echo ""
 echo "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
