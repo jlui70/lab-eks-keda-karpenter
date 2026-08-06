@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: lab-eks-keda-karpenter
+  description: 'Demonstracao pratica de autoscaling event-driven no Kubernetes: KEDA
+    + Karpenter respondendo a filas SQS, com provisionamento de nos em 60-90s.'
+spec:
+  type: infrastructure
+  lifecycle: experimental
+  owner: group:default/platform-admins
